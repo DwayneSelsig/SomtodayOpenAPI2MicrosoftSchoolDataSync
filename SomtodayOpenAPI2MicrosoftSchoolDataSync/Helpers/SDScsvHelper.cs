@@ -94,9 +94,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     {
                         enrollments er = new enrollments();
                         er.classSourcedId = lg.sourcedId;
-                        er.userSourcedId = ll.ToString();
+                        er.userSourcedId = ll.Uuid.ToString();
                         er.role = "student"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#enrollment-roles
-                        if (vestigingModel.Leerlingen.Where(s => s.Uuid == ll).FirstOrDefault() != null) //als de leerling voorkomt in de leerlinglijst.
+                        if (vestigingModel.Leerlingen.Where(s => s.Uuid == ll.Uuid).FirstOrDefault() != null) //als de leerling voorkomt in de leerlinglijst.
                         {
                             enrollments.Add(er);
                         }

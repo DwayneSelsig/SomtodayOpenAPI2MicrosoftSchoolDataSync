@@ -8,19 +8,20 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Models;
+using System.Diagnostics;
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 {
     internal class OpenAPIHelper
     {
-        private SomOpenApiClient somOpenApiClient;
+        private SomOpenApiClient somOpenApiClient; //https://editor.swagger.io/?url=https://api.somtoday.nl/rest/v1/connect/documented/openapi
         public bool IsConnected = false;
         EventLogHelper eh = Program.eh;
 
 
-        public OpenAPIHelper(string clientId, string clientSecret, string schoolUUID)
+        public OpenAPIHelper(string clientId, string clientSecret, string schoolUUID, SomEnvironmentConfig somConfig)
         {
-            RestClient client = new RestClient("https://inloggen.somtoday.nl/oauth2/token?organisation=" + schoolUUID);
+            RestClient client = new RestClient(somConfig.LoginUrl + schoolUUID);
             RestRequest request = new RestRequest();
             request.AddHeader("content-type", "application/x-www-form-urlencoded");
             request.AddParameter("application/x-www-form-urlencoded", "grant_type=client_credentials&client_id=" + clientId + "&client_secret=" + clientSecret, ParameterType.RequestBody);
@@ -35,7 +36,12 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     hc.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
                     somOpenApiClient = new SomOpenApiClient(hc);
+                    somOpenApiClient.BaseUrl = somConfig.Url;
                     IsConnected = true;
+                }
+                else if(response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    eh.WriteLog("Unauthorized. Controleer Client Id en Secret: " + response.Content, EventLogEntryType.Warning, 100);
                 }
             }
             catch
@@ -91,8 +97,17 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
         private List<Vestiging> GetVestigingen()
         {
             List<Vestiging> vestigingen = new List<Vestiging>();
-            VestigingResponse vestigingenResponse = somOpenApiClient.VestigingAsync(null, null).Result;
-            return vestigingenResponse.Vestigingen.ToList();
+            try
+            {
+                VestigingResponse vestigingenResponse = somOpenApiClient.VestigingAsync(null, null).Result;
+                return vestigingenResponse.Vestigingen.ToList();
+            }
+            catch (Exception e)
+            {
+                eh.WriteLog("Error: Vestigingen niet opgehaald: " + e.InnerException, EventLogEntryType.Error, 100);
+
+                return vestigingen;
+            }
         }
 
         private List<Lesgroep> GetLesgroepen(Vestiging vestiging)
@@ -101,7 +116,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             List<Lesgroep> _lesgroepen = new List<Lesgroep>();
             while (getMoreLesgroepen)
             {
-                LesgroepResponse lesgroepenResponse = somOpenApiClient.LesgroepAsync(null, Peilschooljaar.HUIDIG, vestiging.Uuid, _lesgroepen.Count, 100, null, null).Result;
+                LesgroepResponse lesgroepenResponse = somOpenApiClient.LesgroepAsync(null, Peilschooljaar13.HUIDIG, vestiging.Uuid, _lesgroepen.Count, 100, null, null).Result;
 
                 if (lesgroepenResponse.Lesgroepen.Count != 0)
                 {
@@ -147,7 +162,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             List<OuderVerzorger> _userLesgroepModel = new List<OuderVerzorger>();
             while (getMoreOuders)
             {
-                OuderVerzorgerResponse ouders = somOpenApiClient.OuderVerzorgerAsync(null, Peilschooljaar.HUIDIG, vestiging.Uuid, _userLesgroepModel.Count, 100, null, null).Result;
+                OuderVerzorgerResponse ouders = somOpenApiClient.OuderVerzorgerAsync(null, Peilschooljaar18.HUIDIG, vestiging.Uuid, _userLesgroepModel.Count, 100, null, null).Result;
                 if (ouders.OuderVerzorgers.Count != 0)
                 {
                     Console.WriteLine(_userLesgroepModel.Count);
@@ -171,7 +186,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             List<Medewerker> _userLesgroepModel = new List<Medewerker>();
             while (getMoreMedewerkers)
             {
-                MedewerkerResponse medewerkers = somOpenApiClient.MedewerkerAsync(Peilschooljaar.HUIDIG, null, vestiging.Uuid, _userLesgroepModel.Count, 100, null, null).Result;
+                MedewerkerResponse medewerkers = somOpenApiClient.MedewerkerAsync(Peilschooljaar11.HUIDIG, null, vestiging.Uuid, _userLesgroepModel.Count, 100, null, null).Result;
                 if (medewerkers.Medewerkers.Count != 0)
                 {
                     Console.WriteLine(_userLesgroepModel.Count);
