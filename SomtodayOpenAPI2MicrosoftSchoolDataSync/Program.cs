@@ -27,6 +27,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
         static string outputFolder;
         static bool enableGuardianSync;
         static SomEnvironmentConfig somOmgeving;
+        static int sdsCsvVersion;
 
         public static EventLogHelper eh = new EventLogHelper();
         public static OpenAPIHelper oh;
@@ -126,6 +127,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                         break;
                 }
             }
+
+            if (!int.TryParse(ConfigurationManager.AppSettings["SDSCsvVersion"], out sdsCsvVersion))
+            {
+                eh.WriteLog("Fout: SDSCsvVersion is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                isValid = false;
+            }
+
             return isValid;
         }
 
@@ -188,29 +196,77 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 }
                 if (oh.IsConnected)
                 {
-                    List<VestigingModel> allInfo = oh.DownloadAllInfo(booleanFilterBylocation, includedLocationCode, enableGuardianSync);
-                    List<SDScsv> sdsCsvList = new List<SDScsv>();
+                    List<VestigingModel> allInfo = oh.DownloadAllInfo(booleanFilterBylocation, includedLocationCode, false);
+                    // fh.SaveJsonToDisk(allInfo, @"R:\temp\");
+
+
+                    List<SDScsvV1> sdsCsvV1List = new List<SDScsvV1>();
+                    List<SDScsvV2> sdsCsvV2List = new List<SDScsvV2>();
+
                     foreach (VestigingModel info in allInfo)
                     {
                         eh.WriteLog($"VestigingsInfo: {info.Vestiging.Naam}, {info.Lesgroepen.Count} Lesgroepen, {info.Medewerkers.Count} Docenten, {info.Leerlingen.Count} Leerlingen, {info.OuderVerzorgers.Count} Ouders");
-                        SDScsvHelper sh = new SDScsvHelper(info);
-                        SDScsv sdsCsv = sh.ConvertToSDSCSV();
-                        if (seperateOutputFolderForEachLocation)
+
+                        if (sdsCsvVersion == 1)
                         {
-                            string actualOutputFolder = outputFolder + info.Vestiging.Afkorting + "\\";
-                            eh.WriteLog($"Schrijven naar: {actualOutputFolder}");
-                            fh.SaveToDisk(sdsCsv, actualOutputFolder);
+                            SDScsvHelperV1 sh = new SDScsvHelperV1(info);
+                            SDScsvV1 sdsCsv = sh.ConvertToSDSCSV();
+                            if (seperateOutputFolderForEachLocation)
+                            {
+                                string actualOutputFolder = outputFolder + info.Vestiging.Afkorting + "\\";
+                                eh.WriteLog($"Schrijven naar: {actualOutputFolder}");
+                                fh.SaveV1ToDisk(sdsCsv, actualOutputFolder);
+                            }
+                            else
+                            {
+                                sdsCsvV1List.Add(sdsCsv);
+                            }
+                            if (sdsCsvV1List.Count > 0 && !seperateOutputFolderForEachLocation)
+                            {
+                                eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                                fh.SaveV1ToDisk(sdsCsvV1List, outputFolder);
+                            }
                         }
-                        else
+
+                        if (sdsCsvVersion == 2)
                         {
-                            sdsCsvList.Add(sdsCsv);
+                            SDScsvHelperV2 sh = new SDScsvHelperV2(info);
+                            SDScsvV2 sdsCsv = sh.ConvertToSDSCSV();
+                            if (seperateOutputFolderForEachLocation)
+                            {
+                                string actualOutputFolder = outputFolder + info.Vestiging.Afkorting + "\\";
+                                eh.WriteLog($"Schrijven naar: {actualOutputFolder}");
+                                fh.SaveV2ToDisk(sdsCsv, actualOutputFolder);
+                            }
+                            else
+                            {
+                                sdsCsvV2List.Add(sdsCsv);
+                            }
+                            if (sdsCsvV2List.Count > 0 && !seperateOutputFolderForEachLocation)
+                            {
+                                eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                                fh.SaveV2ToDisk(sdsCsvV2List, outputFolder);
+                            }
                         }
                     }
-                    if (sdsCsvList.Count > 0 && !seperateOutputFolderForEachLocation)
+
+                    if (sdsCsvVersion == 1)
                     {
-                        eh.WriteLog($"Alles schrijven naar: {outputFolder}");
-                        fh.SaveToDisk(sdsCsvList, outputFolder);
+                        if (sdsCsvV1List.Count > 0 && !seperateOutputFolderForEachLocation)
+                        {
+                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                            fh.SaveV1ToDisk(sdsCsvV1List, outputFolder);
+                        }
                     }
+                    if (sdsCsvVersion == 2)
+                    {
+                        if (sdsCsvV2List.Count > 0 && !seperateOutputFolderForEachLocation)
+                        {
+                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                            fh.SaveV2ToDisk(sdsCsvV2List, outputFolder);
+                        }
+                    }
+
                 }
                 else
                 {
@@ -223,8 +279,6 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
             }
             Thread.Sleep(10000);
         }
-
-
     }
 }
 

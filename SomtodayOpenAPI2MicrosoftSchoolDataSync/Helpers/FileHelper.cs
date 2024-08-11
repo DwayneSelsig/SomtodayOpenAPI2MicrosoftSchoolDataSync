@@ -16,9 +16,110 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
     {
 
         EventLogHelper eh = Program.eh;
-        internal void SaveToDisk(List<SDScsv> sdsCsvList, string outputFolder)
+        CsvConfiguration config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            SDScsv completelist = new SDScsv()
+            Delimiter = ",",
+            Encoding = Encoding.UTF8
+        };
+
+        internal void SaveJsonToDisk(List<VestigingModel> allInfo, string targetFolder)
+        {
+            //save json to disk. use system.text.json
+            string json = System.Text.Json.JsonSerializer.Serialize(allInfo);
+            File.WriteAllText(targetFolder + "allInfo.json", json);
+        }
+
+        internal List<VestigingModel> LoadJsonFromDisk(string targetFolder)
+        {
+            List<VestigingModel> allInfo = new List<VestigingModel>();
+            //load json from disk. use system.text.json
+            string json = File.ReadAllText(targetFolder + "allInfo.json");
+            allInfo = System.Text.Json.JsonSerializer.Deserialize<List<VestigingModel>>(json);
+            return allInfo;
+        }
+
+        internal void SaveV1ToDisk(List<SDScsvV1> sdsCsv, string actualOutputFolder)
+        {
+            SDScsvV1 completeList = new SDScsvV1()
+            {
+                Schools = sdsCsv.SelectMany(o => o.Schools).ToList(),
+                Sections = sdsCsv.SelectMany(o => o.Sections).ToList(),
+                Teachers = sdsCsv.SelectMany(o => o.Teachers).ToList(),
+                Students = sdsCsv.SelectMany(o => o.Students).ToList(),
+                TeacherRosters = sdsCsv.SelectMany(o => o.TeacherRosters).ToList(),
+                StudentEnrollments = sdsCsv.SelectMany(o => o.StudentEnrollments).ToList(),
+                User = sdsCsv.SelectMany(o => o.User).ToList(),
+                Guardianrelationship = sdsCsv.SelectMany(o => o.Guardianrelationship).ToList()
+            };
+            SaveV1ToDisk(completeList, actualOutputFolder);
+        }
+        internal void SaveV1ToDisk(SDScsvV1 sdsCsv, string actualOutputFolder)
+        {
+            CreateOutputFolderIfNeeded(actualOutputFolder);
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Schools.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<SchoolCSVMap>();
+                csv.WriteRecords(sdsCsv.Schools);
+            }
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Sections.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<SectionCSVMap>();
+                csv.WriteRecords(sdsCsv.Sections);
+            }
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Teachers.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<TeacherCSVMap>();
+                csv.WriteRecords(sdsCsv.Teachers);
+            }
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Students.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<StudentCSVMap>();
+                csv.WriteRecords(sdsCsv.Students);
+            }
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"TeacherRosters.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<TeacherRosterCSVMap>();
+                csv.WriteRecords(sdsCsv.TeacherRosters);
+            }
+
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"StudentEnrollments.csv"))
+            {
+                var csv = new CsvWriter(writer, config);
+                csv.Context.RegisterClassMap<StudentEnrollmentCSVMap>();
+                csv.WriteRecords(sdsCsv.StudentEnrollments);
+            }
+
+            if (sdsCsv.User.Count > 0)
+            {
+                using (TextWriter writer = new StreamWriter(actualOutputFolder + @"User.csv"))
+                {
+                    var csv = new CsvWriter(writer, config);
+                    csv.Context.RegisterClassMap<GuardianCSVMap>();
+                    csv.WriteRecords(sdsCsv.User);
+                }
+
+                using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Guardianrelationship.csv"))
+                {
+                    var csv = new CsvWriter(writer, config);
+                    csv.Context.RegisterClassMap<GuardianRelationshipCSVMap>();
+                    csv.WriteRecords(sdsCsv.Guardianrelationship);
+                }
+            }
+        }
+
+        internal void SaveV2ToDisk(List<SDScsvV2> sdsCsvList, string outputFolder)
+        {
+            SDScsvV2 completelist = new SDScsvV2()
             {
                 orgs = sdsCsvList.SelectMany(o => o.orgs).ToList(),
                 classes = sdsCsvList.SelectMany(c => c.classes).ToList(),
@@ -27,23 +128,11 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 roles = sdsCsvList.SelectMany(r => r.roles).ToList(),
                 users = sdsCsvList.SelectMany(u => u.users).ToList(),
             };
-            SaveToDisk(completelist, outputFolder);
+            SaveV2ToDisk(completelist, outputFolder);
         }
-        internal void SaveToDisk(SDScsv sdsCsv, string outputFolder)
+        internal void SaveV2ToDisk(SDScsvV2 sdsCsv, string outputFolder)
         {
-            if (!Directory.Exists(outputFolder))
-            {
-                eh.WriteLog(String.Format("Output directory bestaat niet, maar wordt nu aangemaakt: {0} ", outputFolder), EventLogEntryType.Information, 100);
-                Directory.CreateDirectory(outputFolder);
-            }
-
-
-            CsvConfiguration config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = ",",
-                Encoding = Encoding.UTF8
-            };
-
+            CreateOutputFolderIfNeeded(outputFolder);
 
             using (TextWriter writer = new StreamWriter(outputFolder + @"orgs.csv"))
             {
@@ -88,6 +177,15 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     csv.Context.RegisterClassMap<relationshipsClassMap>();
                     csv.WriteRecords(sdsCsv.relationships);
                 }
+            }
+        }
+
+        private void CreateOutputFolderIfNeeded(string outputFolder)
+        {
+            if (!Directory.Exists(outputFolder))
+            {
+                eh.WriteLog(String.Format("Output directory bestaat niet, maar wordt nu aangemaakt: {0} ", outputFolder), EventLogEntryType.Information, 100);
+                Directory.CreateDirectory(outputFolder);
             }
         }
     }

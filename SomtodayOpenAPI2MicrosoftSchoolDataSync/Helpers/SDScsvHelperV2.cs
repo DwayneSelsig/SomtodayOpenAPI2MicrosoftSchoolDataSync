@@ -12,20 +12,20 @@ using System.Xml.Linq;
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 {
-    internal class SDScsvHelper
+    internal class SDScsvHelperV2
     {
         SettingsHelper sh = new SettingsHelper();
 
         private VestigingModel vestigingModel;
 
-        public SDScsvHelper(VestigingModel info)
+        public SDScsvHelperV2(VestigingModel info)
         {
             this.vestigingModel = info;
         }
 
-        internal SDScsv ConvertToSDSCSV()
+        internal SDScsvV2 ConvertToSDSCSV()
         {
-            SDScsv result = new SDScsv();
+            SDScsvV2 result = new SDScsvV2();
 
             result.orgs = GetOrgs();
             result.users = GetUsers();

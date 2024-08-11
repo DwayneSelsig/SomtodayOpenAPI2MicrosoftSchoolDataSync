@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
 {
-    internal class SDScsv
+    internal class SDScsvV2
     {
 
         // https://learn.microsoft.com/en-us/schooldatasync/sds-v2.1-csv-file-format

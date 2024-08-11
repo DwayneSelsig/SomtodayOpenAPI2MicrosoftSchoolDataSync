@@ -142,10 +142,12 @@
     <Compile Include="Helpers\EventLogHelper.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Helpers\OpenAPIHelper.cs" />
-    <Compile Include="Helpers\SDScsvHelper.cs" />
+    <Compile Include="Helpers\SDScsvHelperV1.cs" />
+    <Compile Include="Helpers\SDScsvHelperV2.cs" />
     <Compile Include="Helpers\SettingsHelper.cs" />
     <Compile Include="Helpers\SomEnvironmentConfig.cs" />
-    <Compile Include="Models\SDScsv.cs" />
+    <Compile Include="Models\SDScsvV1.cs" />
+    <Compile Include="Models\SDScsvV2.cs" />
     <Compile Include="Models\VestigingModel.cs" />
     <Compile Include="OpenAPIs\openapi.cs" />
     <Compile Include="Program.cs" />
