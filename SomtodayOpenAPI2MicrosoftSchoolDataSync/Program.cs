@@ -187,16 +187,17 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 eh.WriteLog("Sync gestart met applicatieversie: " + buildDate.ToString("o").Split('T')[0], EventLogEntryType.Information, 100);
 
                 oh = new OpenAPIHelper(clientId, clientSecret, schoolUUID, somOmgeving);
-                int i = 1;
+                int i = 0;
                 while (!oh.IsConnected && i < 20)
                 {
-                    Console.WriteLine("try again..." + i);
-                    oh = new OpenAPIHelper(clientId, clientSecret, schoolUUID, somOmgeving);
                     i++;
+                    Console.WriteLine("try again..." + i);
+                    Thread.Sleep(2000);
+                    oh = new OpenAPIHelper(clientId, clientSecret, schoolUUID, somOmgeving);
                 }
                 if (oh.IsConnected)
                 {
-                    List<VestigingModel> allInfo = oh.DownloadAllInfo(booleanFilterBylocation, includedLocationCode, false);
+                    List<VestigingModel> allInfo = oh.DownloadAllInfo(booleanFilterBylocation, includedLocationCode, enableGuardianSync);
                     // fh.SaveJsonToDisk(allInfo, @"R:\temp\");
 
 
@@ -220,11 +221,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                             else
                             {
                                 sdsCsvV1List.Add(sdsCsv);
-                            }
-                            if (sdsCsvV1List.Count > 0 && !seperateOutputFolderForEachLocation)
-                            {
-                                eh.WriteLog($"Alles schrijven naar: {outputFolder}");
-                                fh.SaveV1ToDisk(sdsCsvV1List, outputFolder);
+                                //naar disk schrijven buiten de foreach loop
                             }
                         }
 
@@ -241,11 +238,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                             else
                             {
                                 sdsCsvV2List.Add(sdsCsv);
-                            }
-                            if (sdsCsvV2List.Count > 0 && !seperateOutputFolderForEachLocation)
-                            {
-                                eh.WriteLog($"Alles schrijven naar: {outputFolder}");
-                                fh.SaveV2ToDisk(sdsCsvV2List, outputFolder);
+                                //naar disk schrijven buiten de foreach loop
                             }
                         }
                     }
@@ -254,7 +247,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                     {
                         if (sdsCsvV1List.Count > 0 && !seperateOutputFolderForEachLocation)
                         {
-                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                            eh.WriteLog($"Alles schrijven naar1: {outputFolder}");
                             fh.SaveV1ToDisk(sdsCsvV1List, outputFolder);
                         }
                     }
@@ -262,7 +255,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                     {
                         if (sdsCsvV2List.Count > 0 && !seperateOutputFolderForEachLocation)
                         {
-                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
+                            eh.WriteLog($"Alles schrijven naar2: {outputFolder}");
                             fh.SaveV2ToDisk(sdsCsvV2List, outputFolder);
                         }
                     }

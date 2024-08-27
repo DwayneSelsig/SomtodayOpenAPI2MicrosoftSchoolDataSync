@@ -39,18 +39,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     somOpenApiClient.BaseUrl = somConfig.Url;
                     IsConnected = true;
                 }
-                else if(response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     eh.WriteLog("Unauthorized. Controleer Client Id en Secret: " + response.Content, EventLogEntryType.Warning, 100);
                 }
             }
-            catch
+            catch (Exception e)
             {
-                //LOG: connection failed
+                eh.WriteLog("Error: Somtoday niet bereikbaar: " + e.InnerException, EventLogEntryType.Error, 100);
             }
         }
-
-
 
         internal List<VestigingModel> DownloadAllInfo(bool booleanFilterBylocation, string[] includedLocationCode, bool enableGuardianSync)
         {
@@ -92,8 +90,6 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             }
             return result;
         }
-
-
         private List<Vestiging> GetVestigingen()
         {
             List<Vestiging> vestigingen = new List<Vestiging>();
@@ -201,6 +197,47 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             Console.WriteLine(" medewerkers.");
             Console.WriteLine();
             return _userLesgroepModel;
+        }
+
+
+        private List<Account> GetAccountInfo(Vestiging vestiging)
+        {
+            List<Account> accounts = new List<Account>();
+            List<Account> accountsMedewerkers = new List<Account>();
+            List<Account> accountsLeerlingen = new List<Account>();
+
+            bool getMoreLeerlingen = true;
+            bool getMoreMedewerkers = true;
+
+            while (getMoreMedewerkers)
+            {
+                AccountResponse medewerkerAccounts = somOpenApiClient.AccountGET3Async(null, vestiging.Uuid, 0, accountsMedewerkers.Count, null).Result;
+                if (medewerkerAccounts.Accounts.Count != 0)
+                {
+                    accountsMedewerkers.AddRange(medewerkerAccounts.Accounts);
+                }
+                else
+                {
+                    getMoreMedewerkers = false;
+                }
+
+            }
+            while (getMoreLeerlingen)
+            {
+                AccountResponse leerlingAccounts = somOpenApiClient.AccountGETAsync(null, Peilschooljaar7.HUIDIG, vestiging.Uuid, 0, accountsLeerlingen.Count, null).Result;
+                if (leerlingAccounts.Accounts.Count != 0)
+                {
+                    accountsLeerlingen.AddRange(leerlingAccounts.Accounts);
+                }
+                else
+                {
+                    getMoreLeerlingen = false;
+                }
+            }
+
+            accounts.AddRange(accountsMedewerkers);
+            accounts.AddRange(accountsLeerlingen);
+            return accounts;
         }
     }
 }

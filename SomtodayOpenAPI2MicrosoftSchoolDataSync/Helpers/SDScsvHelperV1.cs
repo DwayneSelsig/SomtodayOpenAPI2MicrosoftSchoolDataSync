@@ -56,20 +56,22 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 if (ouder.Leerlingen_van_vestiging?.Count > 0)
                 {
                     Guardian guardian = new Guardian();
-
-                    guardian.SISid = ouder.Uuid.ToString();
-                    guardian.Email = ouder.Emailadres;
-                    guardian.FirstName = string.IsNullOrEmpty(ouder.Voorvoegsel) ? ouder.Voorletters : string.Format($"{ouder.Voorvoegsel} {ouder.Achternaam}");
-                    guardian.Phone = ouder.Telefoonnummer;
-                    guardian.LastName = ouder.Achternaam;
-                    guardians.Add(guardian);
-
-                    foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
+                    if (!string.IsNullOrEmpty(ouder.Emailadres))
                     {
-                        GuardianRelationship gr = new GuardianRelationship();
-                        gr.SISid = leerling.ToString();
-                        gr.Email = ouder.Emailadres;
-                        guardianrelationships.Add(gr);
+                        guardian.SISid = ouder.Uuid.ToString();
+                        guardian.Email = ouder.Emailadres;
+                        guardian.FirstName = string.IsNullOrEmpty(ouder.Voorvoegsel) ? (!string.IsNullOrEmpty(ouder.Voorletters) ? ouder.Voorletters : ".") : string.Format($"{ouder.Voorvoegsel} {ouder.Achternaam}");
+                        guardian.Phone = string.IsNullOrEmpty(ouder.Telefoonnummer) ? "" : BusinessLogicHelper.NormaliseerTelefoonnummerNaarE164(ouder.Telefoonnummer);
+                        guardian.LastName = ouder.Achternaam;
+                        guardians.Add(guardian);
+
+                        foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
+                        {
+                            GuardianRelationship gr = new GuardianRelationship();
+                            gr.SISid = leerling.ToString();
+                            gr.Email = ouder.Emailadres;
+                            guardianrelationships.Add(gr);
+                        }
                     }
                 }
             }
@@ -93,7 +95,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 if (!string.IsNullOrEmpty(lesgroep.Naam))
                 {
-                    if (lesgroep.Docenten.Count > 0 && lesgroep.Leerlingen.Count > 0)
+                    if (lesgroep.Docenten?.Count > 0 && lesgroep.Leerlingen?.Count > 0)
                     {
                         string sectieNaam = GetFilteredName(lesgroep.Naam);
                         Section lg = new Section();
@@ -143,6 +145,15 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                         }
                     }
                 }
+            }
+            if (teachers.Count() > 0)
+            {
+                teachers = teachers.GroupBy(t => t.SISid).Select(t => t.First()).ToList(); //only keep unique objects
+            }
+
+            if (students.Count() > 0)
+            {
+                students = students.GroupBy(s => s.SISid).Select(s => s.First()).ToList(); //only keep unique objects
             }
             return (sections, teachers, students, teacherRoster, studentEnrollments);
         }

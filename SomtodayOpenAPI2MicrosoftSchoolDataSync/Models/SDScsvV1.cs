@@ -28,6 +28,8 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public string SISid { get; set; }
         [DisplayName("Email")]
         public string Email { get; set; }
+        [DisplayName("Role")]
+        public string Role { get; } = "guardian";  // Read-only property, initialized to "guardian"
     }
     public sealed class GuardianRelationshipCSVMap : ClassMap<GuardianRelationship>
     {
@@ -36,6 +38,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
             //AutoMap();
             Map(m => m.SISid).Name("SIS ID");
             Map(m => m.Email).Name("Email");
+            Map(m => m.Role).Name("Role");
         }
     }
 

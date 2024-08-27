@@ -57,42 +57,42 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
         {
             CreateOutputFolderIfNeeded(actualOutputFolder);
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Schools.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"School.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<SchoolCSVMap>();
                 csv.WriteRecords(sdsCsv.Schools);
             }
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Sections.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Section.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<SectionCSVMap>();
                 csv.WriteRecords(sdsCsv.Sections);
             }
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Teachers.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Teacher.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<TeacherCSVMap>();
                 csv.WriteRecords(sdsCsv.Teachers);
             }
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Students.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"Student.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<StudentCSVMap>();
                 csv.WriteRecords(sdsCsv.Students);
             }
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"TeacherRosters.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"TeacherRoster.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<TeacherRosterCSVMap>();
                 csv.WriteRecords(sdsCsv.TeacherRosters);
             }
 
-            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"StudentEnrollments.csv"))
+            using (TextWriter writer = new StreamWriter(actualOutputFolder + @"StudentEnrollment.csv"))
             {
                 var csv = new CsvWriter(writer, config);
                 csv.Context.RegisterClassMap<StudentEnrollmentCSVMap>();

@@ -50,11 +50,14 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
                 {
-                    relationships rel = new relationships();
-                    rel.userSourcedId = leerling.ToString();
-                    rel.relationshipUserSourcedId = ouder.Uuid.ToString();
-                    rel.relationshipRole = "guardian"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#contact-relationship-roles
-                    relationships.Add(rel);
+                    if (!string.IsNullOrEmpty(ouder.Emailadres))
+                    {
+                        relationships rel = new relationships();
+                        rel.userSourcedId = leerling.ToString();
+                        rel.relationshipUserSourcedId = ouder.Uuid.ToString();
+                        rel.relationshipRole = "guardian"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#contact-relationship-roles
+                        relationships.Add(rel);
+                    }
                 }
             }
             return relationships;
@@ -128,13 +131,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Add(role);
             }
 
-            foreach (var ov in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ov in vestigingModel.OuderVerzorgers)
             {
-                roles role = new roles();
-                role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
-                role.userSourcedId = ov.Uuid.ToString();
-                role.role = "other";
-                result.Add(role);
+                if (!string.IsNullOrEmpty(ov.Emailadres))
+                {
+                    roles role = new roles();
+                    role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
+                    role.userSourcedId = ov.Uuid.ToString();
+                    role.role = "other";
+                    result.Add(role);
+                }
             }
             return result;
         }
@@ -159,15 +165,17 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Add(user);
             }
 
-            foreach (var ov in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ov in vestigingModel.OuderVerzorgers)
             {
-                users user = new users();
-                user.username = ov.Emailadres;
-                user.sourcedId = ov.Uuid.ToString();
-                user.phone = ov.Telefoonnummer;
-                result.Add(user);
+                if (!string.IsNullOrEmpty(ov.Emailadres))
+                {
+                    users user = new users();
+                    user.username = ov.Emailadres;
+                    user.sourcedId = ov.Uuid.ToString();
+                    user.phone = BusinessLogicHelper.NormaliseerTelefoonnummerNaarE164(ov.Telefoonnummer);
+                    result.Add(user);
+                }
             }
-
             return result;
         }
 

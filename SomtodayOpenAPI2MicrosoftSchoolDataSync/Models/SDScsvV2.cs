@@ -206,11 +206,11 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public string userSourcedId { get; set; }
         public string orgSourcedId { get; set; }
         public string role { get; set; }
-        public string sessionSourcedId { get; set; }
-        public string grade { get; set; }
-        public bool isPrimary { get; set; }
-        public DateTime roleStartDate { get; set; }
-        public DateTime roleEndDate { get; set; }
+        //public string sessionSourcedId { get; set; }
+        //public string grade { get; set; }
+        //public bool isPrimary { get; set; }
+        //public DateTime roleStartDate { get; set; }
+        //public DateTime roleEndDate { get; set; }
     }
 
     public class rolesClassMap : ClassMap<roles>
@@ -220,11 +220,11 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
             Map(m => m.userSourcedId).Name("userSourcedId");
             Map(m => m.orgSourcedId).Name("orgSourcedId");
             Map(m => m.role).Name("role");
-            Map(m => m.sessionSourcedId).Name("sessionSourcedId");
-            Map(m => m.grade).Name("grade");
-            Map(m => m.isPrimary).Name("isPrimary");
-            Map(m => m.roleStartDate).Name("roleStartDate");
-            Map(m => m.roleEndDate).Name("roleEndDate");
+            //Map(m => m.sessionSourcedId).Name("sessionSourcedId");
+            //Map(m => m.grade).Name("grade");
+            //Map(m => m.isPrimary).Name("isPrimary");
+            //Map(m => m.roleStartDate).Name("roleStartDate");
+            //Map(m => m.roleEndDate).Name("roleEndDate");
         }
     }
 
