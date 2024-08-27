@@ -50,7 +50,10 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
                 {
-                    if (!string.IsNullOrEmpty(ouder.Emailadres))
+                    //Heeft deze ouder een gekoppelde leerling?
+                    var leerlingModel = vestigingModel.Leerlingen.Where(s => s.Uuid == leerling).FirstOrDefault();
+
+                    if (leerlingModel != null && !string.IsNullOrEmpty(ouder.Emailadres))
                     {
                         relationships rel = new relationships();
                         rel.userSourcedId = leerling.ToString();

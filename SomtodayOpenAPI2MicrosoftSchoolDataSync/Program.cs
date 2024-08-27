@@ -247,7 +247,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                     {
                         if (sdsCsvV1List.Count > 0 && !seperateOutputFolderForEachLocation)
                         {
-                            eh.WriteLog($"Alles schrijven naar1: {outputFolder}");
+                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
                             fh.SaveV1ToDisk(sdsCsvV1List, outputFolder);
                         }
                     }
@@ -255,7 +255,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                     {
                         if (sdsCsvV2List.Count > 0 && !seperateOutputFolderForEachLocation)
                         {
-                            eh.WriteLog($"Alles schrijven naar2: {outputFolder}");
+                            eh.WriteLog($"Alles schrijven naar: {outputFolder}");
                             fh.SaveV2ToDisk(sdsCsvV2List, outputFolder);
                         }
                     }

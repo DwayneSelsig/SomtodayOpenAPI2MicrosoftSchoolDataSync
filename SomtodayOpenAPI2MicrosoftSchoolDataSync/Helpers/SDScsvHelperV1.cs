@@ -38,7 +38,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             result.TeacherRosters = classesInfo.TeacherRoster;
             result.StudentEnrollments = classesInfo.StudentEnrollments;
 
-            var guardianInfo = GetGuardiansAndRelationships();
+            var guardianInfo = GetGuardiansAndRelationships(classesInfo.Students);
 
             result.User = guardianInfo.Guardians;
             result.Guardianrelationship = guardianInfo.Guardianrelationships;
@@ -46,7 +46,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return result;
         }
 
-        private (List<Guardian> Guardians, List<GuardianRelationship> Guardianrelationships) GetGuardiansAndRelationships()
+        private (List<Guardian> Guardians, List<GuardianRelationship> Guardianrelationships) GetGuardiansAndRelationships(List<Student> students)
         {
             List<Guardian> guardians = new List<Guardian>();
             List<GuardianRelationship> guardianrelationships = new List<GuardianRelationship>();
@@ -55,23 +55,30 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 if (ouder.Leerlingen_van_vestiging?.Count > 0)
                 {
-                    Guardian guardian = new Guardian();
-                    if (!string.IsNullOrEmpty(ouder.Emailadres))
+                    bool guardianFound = false;
+
+                    foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
                     {
+                        var leerlingModel = students.Where(s => s.SISid == leerling.ToString()).FirstOrDefault();
+                        if (leerlingModel != null && !string.IsNullOrEmpty(ouder.Emailadres))
+                        {
+                            guardianFound = true;
+                            GuardianRelationship gr = new GuardianRelationship();
+                            gr.SISid = leerling.ToString();
+                            gr.Email = ouder.Emailadres;
+                            guardianrelationships.Add(gr);
+                        }
+                    }
+
+                    if (guardianFound)
+                    {
+                        Guardian guardian = new Guardian();
                         guardian.SISid = ouder.Uuid.ToString();
                         guardian.Email = ouder.Emailadres;
                         guardian.FirstName = string.IsNullOrEmpty(ouder.Voorvoegsel) ? (!string.IsNullOrEmpty(ouder.Voorletters) ? ouder.Voorletters : ".") : string.Format($"{ouder.Voorvoegsel} {ouder.Achternaam}");
                         guardian.Phone = string.IsNullOrEmpty(ouder.Telefoonnummer) ? "" : BusinessLogicHelper.NormaliseerTelefoonnummerNaarE164(ouder.Telefoonnummer);
                         guardian.LastName = ouder.Achternaam;
                         guardians.Add(guardian);
-
-                        foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
-                        {
-                            GuardianRelationship gr = new GuardianRelationship();
-                            gr.SISid = leerling.ToString();
-                            gr.Email = ouder.Emailadres;
-                            guardianrelationships.Add(gr);
-                        }
                     }
                 }
             }
@@ -110,14 +117,14 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
                         foreach (var mw in lesgroep.Docenten)
                         {
-                            TeacherRoster er = new TeacherRoster();
-                            er.SISTeacherid = mw.ToString();
-                            er.SISSectionid = lg.SISid;
-                            teacherRoster.Add(er);
-
                             Medewerker currentTeacher = vestigingModel.Medewerkers.Where(m => m.Uuid == mw).FirstOrDefault();
                             if (currentTeacher != null)
                             {
+                                TeacherRoster er = new TeacherRoster();
+                                er.SISTeacherid = mw.ToString();
+                                er.SISSectionid = lg.SISid;
+                                teacherRoster.Add(er);
+
                                 Teacher teacher = new Teacher();
                                 teacher.SISid = mw.ToString();
                                 teacher.SISSchoolid = vestigingModel.Vestiging.Uuid.ToString();
@@ -128,14 +135,14 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
                         foreach (var ll in lesgroep.Leerlingen)
                         {
-                            StudentEnrollment er = new StudentEnrollment();
-                            er.SISStudentid = ll.Uuid.ToString();
-                            er.SISSectionid = lg.SISid;
-                            studentEnrollments.Add(er);
-
                             Leerling currentStudent = vestigingModel.Leerlingen.Where(s => s.Uuid == ll.Uuid).FirstOrDefault();
                             if (currentStudent != null)
                             {
+                                StudentEnrollment er = new StudentEnrollment();
+                                er.SISStudentid = ll.Uuid.ToString();
+                                er.SISSectionid = lg.SISid;
+                                studentEnrollments.Add(er);
+
                                 Student student = new Student();
                                 student.SISid = ll.Uuid.ToString();
                                 student.SISSchoolid = vestigingModel.Vestiging.Uuid.ToString();
