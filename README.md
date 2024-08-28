@@ -1,4 +1,4 @@
-# SomtodayOpenAPI2MicrosoftSchoolDataSync
+# Somtoday Connect naar Microsoft School Data Sync
 Open source oplossing om Microsoft Teams te kunnen gebruiken met School Data Sync met gegevens uit [Somtoday](https://www.som.today/) via Somtoday Connect. 
 Create Microsoft School Data Sync CSV-files using the Somtoday Connect webservices. 
 
