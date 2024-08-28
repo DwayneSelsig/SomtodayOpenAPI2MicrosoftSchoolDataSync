@@ -78,7 +78,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 if (lesgroep.Docenten.Count > 0 && lesgroep.Leerlingen.Count > 0)
                 {
                     classes lg = new classes();
-                    string sectieNaam = GetFilteredName(lesgroep.Naam);
+                    string sectieNaam = BusinessLogicHelper.GetFilteredName(lesgroep.Naam);
 
                     lg.title = sectieNaam;
                     lg.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
@@ -202,30 +202,6 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Append(x.ToString("000"));
             }
             return result.ToString().TrimStart('0');
-        }
-
-        private string GetFilteredName(string input)
-        {
-            //Alles met een spatie of verboden teken voor OneDrive wordt omgezet naar _
-            string _temp = Regex.Replace(input, @"[^\S]|[\~\""\#\%\&\*\:\<\>\?\/\\{\|}\.\[\]]", "_");
-            return RemoveDiacritics(_temp);
-        }
-
-        private string RemoveDiacritics(string text)
-        {
-            var normalizedString = text.Normalize(NormalizationForm.FormD);
-            var stringBuilder = new StringBuilder();
-
-            foreach (var c in normalizedString)
-            {
-                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
-                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
-                {
-                    stringBuilder.Append(c);
-                }
-            }
-
-            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
     }
 }
