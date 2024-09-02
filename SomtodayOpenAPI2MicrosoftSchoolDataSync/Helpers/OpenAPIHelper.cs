@@ -109,6 +109,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
         private List<Lesgroep> GetLesgroepen(Vestiging vestiging)
         {
             bool getMoreLesgroepen = true;
+            Console.WriteLine(string.Format("Lesgroepen opvragen..."));
             List<Lesgroep> _lesgroepen = new List<Lesgroep>();
             while (getMoreLesgroepen)
             {
@@ -116,6 +117,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
                 if (lesgroepenResponse.Lesgroepen.Count != 0)
                 {
+                    Console.WriteLine(_lesgroepen.Count);
                     _lesgroepen.AddRange(lesgroepenResponse.Lesgroepen);
                 }
                 else
@@ -123,6 +125,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     getMoreLesgroepen = false;
                 }
             }
+            Console.Write(_lesgroepen.Count);
+            Console.WriteLine(" lesgroepen.");
+            Console.WriteLine();
             return _lesgroepen;
         }
 
