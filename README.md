@@ -91,6 +91,10 @@ Mogelijk wil je een ander gegeven uit Somtoday gebruiken om gebruikers te herken
 Let op! Leerlingen ouder dan 18 jaar kunnen ervoor kiezen dat ouders geen inzage hebben in hun schoolprestaties. Aangezien deze keuze niet wordt doorgegeven door Somtoday, moet de instelling voor de wekelijkse samenvatting per e-mail voor iedereen uitgeschakeld blijven. Standaard staat deze e-mail uit, zie deze link voor meer informatie:
 https://docs.microsoft.com/en-us/MicrosoftTeams/expand-teams-across-your-org/assignments-in-teams#weekly-guardian-email-digest
 
+### ClearCsvAtYearEnd
+* True: Op 31 juli wordt er geen data opgehaald, maar de bestaande CSV-bestanden worden leeggemaakt.
+* False: Op 31 juli kan wordt er data opgehaald, omgezet en opgeslagen in CSV-bestanden.
+
 
 ### SdsCsvVersion
 
