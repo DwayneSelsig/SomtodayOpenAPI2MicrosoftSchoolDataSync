@@ -26,7 +26,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
         {
             //save json to disk. use system.text.json
             string json = System.Text.Json.JsonSerializer.Serialize(allInfo);
-            File.WriteAllText(targetFolder + "allInfo.json", json);
+            string filePath = Path.Combine(targetFolder, "allInfo.json");
+
+            File.WriteAllText(filePath, json);
         }
 
         internal List<VestigingModel> LoadJsonFromDisk(string targetFolder)
@@ -186,6 +188,35 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 eh.WriteLog(String.Format("Output directory bestaat niet, maar wordt nu aangemaakt: {0} ", outputFolder), EventLogEntryType.Information, 100);
                 Directory.CreateDirectory(outputFolder);
+            }
+        }
+
+        internal void ClearCsvFiles(string outputFolder, bool seperateOutputFolderForEachLocation)
+        {
+            if (seperateOutputFolderForEachLocation)
+            {
+                string[] folders = Directory.GetDirectories(outputFolder);
+                foreach (string folder in folders)
+                {
+                    EmptyCsvFiles(folder);
+                }
+            }
+            else
+            {
+                EmptyCsvFiles(outputFolder);
+            }
+        }
+
+        private void EmptyCsvFiles(string folder)
+        {
+            // Get all CSV files in the folder
+            string[] csvFiles = Directory.GetFiles(folder, "*.csv");
+            foreach (string csvFile in csvFiles)
+            {
+                // Read the first line to keep the header
+                string firstLine = File.ReadLines(csvFile).FirstOrDefault();
+                // Clear the file content
+                File.WriteAllText(csvFile, firstLine + Environment.NewLine);
             }
         }
     }

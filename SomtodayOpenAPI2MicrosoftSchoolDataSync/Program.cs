@@ -28,6 +28,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
         static bool enableGuardianSync;
         static SomEnvironmentConfig somOmgeving;
         static int sdsCsvVersion;
+        static bool clearCsvAtYearEnd;
 
         public static EventLogHelper eh = new EventLogHelper();
         public static OpenAPIHelper oh;
@@ -134,6 +135,14 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 isValid = false;
             }
 
+            if (!bool.TryParse(ConfigurationManager.AppSettings["ClearCsvAtYearEnd"], out clearCsvAtYearEnd))
+            {
+                eh.WriteLog("Fout: ClearCsvAtYearEnd is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                // Kan gewoon doorgaan, want dit is niet verplicht
+                isValid = true;
+            }
+
+
             return isValid;
         }
 
@@ -172,8 +181,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
 
         static void Main(string[] args)
         {
-
-            DateTime buildDate = new FileInfo(Assembly.GetExecutingAssembly().Location).LastWriteTime;
+            Version buildVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 
             eh.CheckEventLog();
             //sluiten van app door user
@@ -184,8 +192,24 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
             SettingsHelper settingshelper = new SettingsHelper();
             if (settingshelper.ValidateUsernameFormat())
             {
-                eh.WriteLog("Sync gestart met applicatieversie: " + buildDate.ToString("o").Split('T')[0], EventLogEntryType.Information, 100);
 
+                if (clearCsvAtYearEnd && DateTime.Now.Month == 7 && DateTime.Now.Day == 31)
+                {
+                    eh.WriteLog("Vandaag worden de CSV-bestanden leeg gemaakt met applicatieversie: " + buildVersion.ToString(), EventLogEntryType.Information, 100);
+                    try
+                    {
+                        fh.ClearCsvFiles(outputFolder, seperateOutputFolderForEachLocation);
+                        eh.WriteLog("CSV bestanden zijn geleegd voor het nieuwe schooljaar.", EventLogEntryType.Information, 100);
+                    }
+                    catch (Exception ex)
+                    {
+                        eh.WriteLog($"Fout bij het legen van CSV bestanden: {ex.Message}", EventLogEntryType.Error, 400);
+                    }
+                    Thread.Sleep(10000);
+                    return;
+                }
+
+                eh.WriteLog("Sync gestart met applicatieversie: " + buildVersion.ToString(), EventLogEntryType.Information, 100);
                 oh = new OpenAPIHelper(clientId, clientSecret, schoolUUID, somOmgeving);
                 int i = 0;
                 while (!oh.IsConnected && i < 20)
@@ -198,7 +222,11 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 if (oh.IsConnected)
                 {
                     List<VestigingModel> allInfo = oh.DownloadAllInfo(booleanFilterBylocation, includedLocationCode, enableGuardianSync);
-                    // fh.SaveJsonToDisk(allInfo, @"R:\temp\");
+                    //string windowsFolder = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                    //string tempFolder = Path.Combine(windowsFolder, "Temp");
+
+                    //fh.SaveJsonToDisk(allInfo, tempFolder);
+                    //Environment.Exit(0);
 
 
                     List<SDScsvV1> sdsCsvV1List = new List<SDScsvV1>();
@@ -272,6 +300,8 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
             }
             Thread.Sleep(10000);
         }
+
+
     }
 }
 
