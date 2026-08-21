@@ -5,12 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Tests;
 
 public class PopulationExportTests
 {
+    [Fact]
+    public async Task Authentication_request_encodes_credentials_as_form_data()
+    {
+        using var content = OpenAPIHelper.CreateAuthenticationContent("client id", "secret&value");
+
+        string body = await content.ReadAsStringAsync();
+
+        Assert.Equal("grant_type=client_credentials&client_id=client+id&client_secret=secret%26value", body);
+    }
+
     [Fact]
     public void Unresolved_source_members_do_not_create_a_class_or_location()
     {

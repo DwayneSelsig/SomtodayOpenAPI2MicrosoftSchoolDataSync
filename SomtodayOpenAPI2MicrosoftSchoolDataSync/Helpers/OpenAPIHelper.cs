@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,39 +13,61 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
     internal class OpenAPIHelper
     {
         private SomOpenApiClient somOpenApiClient; //https://editor.swagger.io/?url=https://api.somtoday.nl/rest/v1/connect/documented/openapi
+        private HttpClient somApiHttpClient;
         public bool IsConnected = false;
         EventLogHelper eh = Program.eh;
 
 
         public OpenAPIHelper(string clientId, string clientSecret, string schoolUUID, SomEnvironmentConfig somConfig)
         {
-            RestClient client = new RestClient(somConfig.LoginUrl + schoolUUID);
-            RestRequest request = new RestRequest();
-            request.AddHeader("content-type", "application/x-www-form-urlencoded");
-            request.AddParameter("application/x-www-form-urlencoded", "grant_type=client_credentials&client_id=" + clientId + "&client_secret=" + clientSecret, ParameterType.RequestBody);
             try
             {
-                RestResponse response = client.ExecutePost(request); //hier ontstaat een error indien Som niet bereikbaar is.
-                if (response.IsSuccessful)
-                {
-                    dynamic data = JObject.Parse(response.Content); //hier ontstaat een error indien Som onderhoud heeft.
-                    string accessToken = data.access_token;
-                    HttpClient hc = new HttpClient();
-                    hc.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                using HttpClient authenticationClient = new HttpClient();
+                using FormUrlEncodedContent content = CreateAuthenticationContent(clientId, clientSecret);
+                using HttpResponseMessage response = authenticationClient.PostAsync(
+                    somConfig.LoginUrl + schoolUUID,
+                    content).GetAwaiter().GetResult();
 
-                    somOpenApiClient = new SomOpenApiClient(hc);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseContent = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    string accessToken = JObject.Parse(responseContent)["access_token"]?.Value<string>();
+                    if (string.IsNullOrWhiteSpace(accessToken))
+                    {
+                        eh.WriteLog("Error: Somtoday heeft geen access token teruggegeven.", Microsoft.Extensions.Logging.LogLevel.Error, 100);
+                        return;
+                    }
+
+                    somApiHttpClient = new HttpClient();
+                    somApiHttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                    somOpenApiClient = new SomOpenApiClient(somApiHttpClient);
                     somOpenApiClient.BaseUrl = somConfig.Url;
                     IsConnected = true;
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    eh.WriteLog("Unauthorized. Controleer Client Id en Secret: " + response.Content, Microsoft.Extensions.Logging.LogLevel.Warning, 100);
+                    eh.WriteLog("Unauthorized. Controleer Client Id en Secret.", Microsoft.Extensions.Logging.LogLevel.Warning, 100);
+                }
+                else
+                {
+                    eh.WriteLog("Error: Somtoday authenticatie mislukt met statuscode " + (int)response.StatusCode + ".", Microsoft.Extensions.Logging.LogLevel.Error, 100);
                 }
             }
             catch (Exception e)
             {
-                eh.WriteLog("Error: Somtoday niet bereikbaar: " + e.InnerException, Microsoft.Extensions.Logging.LogLevel.Error, 100);
+                eh.WriteLog("Error: Somtoday niet bereikbaar: " + e.Message, Microsoft.Extensions.Logging.LogLevel.Error, 100);
             }
+        }
+
+        internal static FormUrlEncodedContent CreateAuthenticationContent(string clientId, string clientSecret)
+        {
+            return new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "client_credentials",
+                ["client_id"] = clientId,
+                ["client_secret"] = clientSecret
+            });
         }
 
         internal List<VestigingModel> DownloadAllInfo(bool booleanFilterBylocation, string[] includedLocationCode, bool enableGuardianSync)
