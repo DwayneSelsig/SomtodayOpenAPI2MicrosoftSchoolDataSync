@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Models;
-using System.Diagnostics;
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 {
@@ -41,12 +40,12 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    eh.WriteLog("Unauthorized. Controleer Client Id en Secret: " + response.Content, EventLogEntryType.Warning, 100);
+                    eh.WriteLog("Unauthorized. Controleer Client Id en Secret: " + response.Content, Microsoft.Extensions.Logging.LogLevel.Warning, 100);
                 }
             }
             catch (Exception e)
             {
-                eh.WriteLog("Error: Somtoday niet bereikbaar: " + e.InnerException, EventLogEntryType.Error, 100);
+                eh.WriteLog("Error: Somtoday niet bereikbaar: " + e.InnerException, Microsoft.Extensions.Logging.LogLevel.Error, 100);
             }
         }
 
@@ -100,7 +99,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             }
             catch (Exception e)
             {
-                eh.WriteLog("Error: Vestigingen niet opgehaald: " + e.InnerException, EventLogEntryType.Error, 100);
+                eh.WriteLog("Error: Vestigingen niet opgehaald: " + e.InnerException, Microsoft.Extensions.Logging.LogLevel.Error, 100);
 
                 return vestigingen;
             }

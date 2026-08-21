@@ -13,12 +13,12 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     {
 
         // https://learn.microsoft.com/en-us/schooldatasync/sds-v2.1-csv-file-format
-        public List<classes> classes { get; set; }          //optional/required
-        public List<enrollments> enrollments { get; set; }  //optional/required
-        public List<orgs> orgs { get; set; }    //required
-        public List<relationships> relationships { get; set; }  //optional/required when syncing guardians
-        public List<roles> roles { get; set; }  //required
-        public List<users> users { get; set; }  //required
+        public List<SdsClass> classes { get; set; }          //optional/required
+        public List<SdsEnrollment> enrollments { get; set; }  //optional/required
+        public List<SdsOrganization> orgs { get; set; }    //required
+        public List<SdsRelationship> relationships { get; set; }  //optional/required when syncing guardians
+        public List<SdsRole> roles { get; set; }  //required
+        public List<SdsUser> users { get; set; }  //required
 
 //public List<courses> courses { get; set; }          //optional (If your classes.csv data contains links to courses, the corresponding data should be provided to avoid error messages when processing data.) 
 
@@ -49,7 +49,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class classes
+    public class SdsClass
     {
         public string sourcedId { get; set; }
         public string orgSourcedId { get; set; }
@@ -58,9 +58,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public string courseSourcedId { get; set; }
     }
 
-    public class classesClassMap : ClassMap<classes>
+    public class SdsClassMap : ClassMap<SdsClass>
     {
-        public classesClassMap()
+        public SdsClassMap()
         {
             Map(m => m.sourcedId).Name("sourcedId");
             Map(m => m.orgSourcedId).Name("orgSourcedId");
@@ -70,7 +70,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }
     }
 
-    public class courses
+    public class SdsCourse
     {
         public string sourcedId { get; set; }
         public int orgSourcedId { get; set; }
@@ -81,9 +81,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public string grade { get; set; }
     }
 
-    public class coursesClassMap : ClassMap<courses>
+    public class SdsCourseMap : ClassMap<SdsCourse>
     {
-        public coursesClassMap()
+        public SdsCourseMap()
         {
             Map(m => m.sourcedId).Name("sourcedId");
             Map(m => m.orgSourcedId).Name("orgSourcedId");
@@ -124,16 +124,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class enrollments
+    public class SdsEnrollment
     {
         public string classSourcedId { get; set; }
         public string userSourcedId { get; set; }
         public string role { get; set; }
     }
 
-    public class enrollmentsClassMap : ClassMap<enrollments>
+    public class SdsEnrollmentMap : ClassMap<SdsEnrollment>
     {
-        public enrollmentsClassMap()
+        public SdsEnrollmentMap()
         {
             Map(m => m.classSourcedId).Name("classSourcedId");
             Map(m => m.userSourcedId).Name("userSourcedId");
@@ -141,7 +141,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }
     }
 
-    public class orgs
+    public class SdsOrganization
     {
         public string sourcedId { get; set; }
         public string name { get; set; }
@@ -173,9 +173,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }*/
     }
 
-    public class orgsClassMap : ClassMap<orgs>
+    public class SdsOrganizationMap : ClassMap<SdsOrganization>
     {
-        public orgsClassMap()
+        public SdsOrganizationMap()
         {
             Map(m => m.sourcedId).Name("sourcedId");
             Map(m => m.name).Name("name");
@@ -184,16 +184,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }
     }
 
-    public class relationships
+    public class SdsRelationship
     {
         public string userSourcedId { get; set; }
         public string relationshipUserSourcedId { get; set; }
         public string relationshipRole { get; set; }
     }
 
-    public class relationshipsClassMap : ClassMap<relationships>
+    public class SdsRelationshipMap : ClassMap<SdsRelationship>
     {
-        public relationshipsClassMap()
+        public SdsRelationshipMap()
         {
             Map(m => m.userSourcedId).Name("userSourcedId");
             Map(m => m.relationshipUserSourcedId).Name("relationshipUserSourcedId");
@@ -201,7 +201,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }
     }
 
-    public class roles
+    public class SdsRole
     {
         public string userSourcedId { get; set; }
         public string orgSourcedId { get; set; }
@@ -213,9 +213,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         //public DateTime roleEndDate { get; set; }
     }
 
-    public class rolesClassMap : ClassMap<roles>
+    public class SdsRoleMap : ClassMap<SdsRole>
     {
-        public rolesClassMap()
+        public SdsRoleMap()
         {
             Map(m => m.userSourcedId).Name("userSourcedId");
             Map(m => m.orgSourcedId).Name("orgSourcedId");
@@ -245,7 +245,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class users
+    public class SdsUser
     {
         public string sourcedId { get; set; }
         public string username { get; set; }
@@ -258,9 +258,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public string sms { get; set; }
     }
 
-    public class usersClassMap : ClassMap<users>
+    public class SdsUserMap : ClassMap<SdsUser>
     {
-        public usersClassMap()
+        public SdsUserMap()
         {
             Map(m => m.sourcedId).Name("sourcedId");
             Map(m => m.username).Name("username");

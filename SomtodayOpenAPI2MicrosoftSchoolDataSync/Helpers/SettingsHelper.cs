@@ -32,7 +32,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSyncV2.Helpers
             catch (Exception ex)
             {
                 success = false;
-                eh.WriteLog(string.Format("OutputFormatUsernameTeacher onjuist: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error, 500);
+                eh.WriteLog(string.Format("OutputFormatUsernameTeacher onjuist: {0}", ex.Message), Microsoft.Extensions.Logging.LogLevel.Error, 500);
             }
 
             Leerling leerlingUser = new Leerling() { Emailadres = "testnaam" };
@@ -44,7 +44,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSyncV2.Helpers
             catch (Exception ex)
             {
                 success = false;
-                eh.WriteLog(string.Format("OutputFormatUsernameStudent onjuist: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error, 500);
+                eh.WriteLog(string.Format("OutputFormatUsernameStudent onjuist: {0}", ex.Message), Microsoft.Extensions.Logging.LogLevel.Error, 500);
             }
             return success;
         }

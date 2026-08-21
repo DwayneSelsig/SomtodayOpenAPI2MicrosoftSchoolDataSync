@@ -1,9 +1,9 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Logging;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Models;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -139,35 +139,35 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             using (TextWriter writer = new StreamWriter(outputFolder + @"orgs.csv"))
             {
                 var csv = new CsvWriter(writer, config);
-                csv.Context.RegisterClassMap<orgsClassMap>();
+                csv.Context.RegisterClassMap<SdsOrganizationMap>();
                 csv.WriteRecords(sdsCsv.orgs);
             }
 
             using (TextWriter writer = new StreamWriter(outputFolder + @"users.csv"))
             {
                 var csv = new CsvWriter(writer, config);
-                csv.Context.RegisterClassMap<usersClassMap>();
+                csv.Context.RegisterClassMap<SdsUserMap>();
                 csv.WriteRecords(sdsCsv.users);
             }
 
             using (TextWriter writer = new StreamWriter(outputFolder + @"roles.csv"))
             {
                 var csv = new CsvWriter(writer, config);
-                csv.Context.RegisterClassMap<rolesClassMap>();
+                csv.Context.RegisterClassMap<SdsRoleMap>();
                 csv.WriteRecords(sdsCsv.roles);
             }
 
             using (TextWriter writer = new StreamWriter(outputFolder + @"classes.csv"))
             {
                 var csv = new CsvWriter(writer, config);
-                csv.Context.RegisterClassMap<classesClassMap>();
+                csv.Context.RegisterClassMap<SdsClassMap>();
                 csv.WriteRecords(sdsCsv.classes);
             }
 
             using (TextWriter writer = new StreamWriter(outputFolder + @"enrollments.csv"))
             {
                 var csv = new CsvWriter(writer, config);
-                csv.Context.RegisterClassMap<enrollmentsClassMap>();
+                csv.Context.RegisterClassMap<SdsEnrollmentMap>();
                 csv.WriteRecords(sdsCsv.enrollments);
             }
 
@@ -176,7 +176,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 using (TextWriter writer = new StreamWriter(outputFolder + @"relationships.csv"))
                 {
                     var csv = new CsvWriter(writer, config);
-                    csv.Context.RegisterClassMap<relationshipsClassMap>();
+                    csv.Context.RegisterClassMap<SdsRelationshipMap>();
                     csv.WriteRecords(sdsCsv.relationships);
                 }
             }
@@ -186,7 +186,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
         {
             if (!Directory.Exists(outputFolder))
             {
-                eh.WriteLog(String.Format("Output directory bestaat niet, maar wordt nu aangemaakt: {0} ", outputFolder), EventLogEntryType.Information, 100);
+                eh.WriteLog(String.Format("Output directory bestaat niet, maar wordt nu aangemaakt: {0} ", outputFolder), LogLevel.Information, 100);
                 Directory.CreateDirectory(outputFolder);
             }
         }

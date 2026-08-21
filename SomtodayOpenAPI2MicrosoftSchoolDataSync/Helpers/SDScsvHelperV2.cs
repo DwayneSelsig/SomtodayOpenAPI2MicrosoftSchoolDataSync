@@ -31,7 +31,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             result.roles = GetRoles();
 
 
-            Tuple<List<classes>, List<enrollments>> classesInfo = GetClassesAndEnrolements();
+            Tuple<List<SdsClass>, List<SdsEnrollment>> classesInfo = GetClassesAndEnrolements();
             result.classes = classesInfo.Item1;
             result.enrollments = classesInfo.Item2;
 
@@ -41,9 +41,9 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return result;
         }
 
-        private List<relationships> GetRelationships()
+        private List<SdsRelationship> GetRelationships()
         {
-            List<relationships> relationships = new List<relationships>();
+            List<SdsRelationship> relationships = new List<SdsRelationship>();
 
             foreach (OuderVerzorger ouder in vestigingModel.OuderVerzorgers)
             {
@@ -54,7 +54,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
                     if (leerlingModel != null && !string.IsNullOrEmpty(ouder.Emailadres))
                     {
-                        relationships rel = new relationships();
+                        SdsRelationship rel = new SdsRelationship();
                         rel.userSourcedId = leerling.ToString();
                         rel.relationshipUserSourcedId = ouder.Uuid.ToString();
                         rel.relationshipRole = "guardian"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#contact-relationship-roles
@@ -65,10 +65,10 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return relationships;
         }
 
-        private Tuple<List<classes>, List<enrollments>> GetClassesAndEnrolements()
+        private Tuple<List<SdsClass>, List<SdsEnrollment>> GetClassesAndEnrolements()
         {
-            List<classes> classes = new List<classes>();
-            List<enrollments> enrollments = new List<enrollments>();
+            List<SdsClass> classes = new List<SdsClass>();
+            List<SdsEnrollment> enrollments = new List<SdsEnrollment>();
 
             string currentSchoolyear = DateTime.Now.Month < 8 ? (DateTime.Now.Year - 1) + "-" + DateTime.Now.Year : DateTime.Now.Year + "-" + (DateTime.Now.Year + 1);
 
@@ -76,7 +76,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 if (lesgroep.Docenten.Count > 0 && lesgroep.Leerlingen.Count > 0)
                 {
-                    classes lg = new classes();
+                    SdsClass lg = new SdsClass();
                     string sectieNaam = BusinessLogicHelper.GetFilteredName(lesgroep.Naam);
 
                     lg.title = sectieNaam;
@@ -86,7 +86,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     classes.Add(lg);
                     foreach (var mw in lesgroep.Docenten)
                     {
-                        enrollments er = new enrollments();
+                        SdsEnrollment er = new SdsEnrollment();
                         er.classSourcedId = lg.sourcedId;
                         er.userSourcedId = mw.ToString();
                         er.role = "teacher";  // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#enrollment-roles
@@ -97,7 +97,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     }
                     foreach (var ll in lesgroep.Leerlingen)
                     {
-                        enrollments er = new enrollments();
+                        SdsEnrollment er = new SdsEnrollment();
                         er.classSourcedId = lg.sourcedId;
                         er.userSourcedId = ll.Uuid.ToString();
                         er.role = "student"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#enrollment-roles
@@ -108,16 +108,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     }
                 }
             }
-            return Tuple.Create<List<classes>, List<enrollments>>(classes, enrollments);
+            return Tuple.Create<List<SdsClass>, List<SdsEnrollment>>(classes, enrollments);
         }
 
 
-        private List<roles> GetRoles()
+        private List<SdsRole> GetRoles()
         {
-            List<roles> result = new List<roles>();
+            List<SdsRole> result = new List<SdsRole>();
             foreach (Medewerker mw in vestigingModel.Medewerkers)
             {
-                roles role = new roles();
+                SdsRole role = new SdsRole();
                 role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
                 role.userSourcedId = mw.Uuid.ToString();
                 role.role = "staff";
@@ -126,7 +126,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
             foreach (Leerling ll in vestigingModel.Leerlingen)
             {
-                roles role = new roles();
+                SdsRole role = new SdsRole();
                 role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
                 role.userSourcedId = ll.Uuid.ToString();
                 role.role = "student";
@@ -137,7 +137,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 if (!string.IsNullOrEmpty(ov.Emailadres))
                 {
-                    roles role = new roles();
+                    SdsRole role = new SdsRole();
                     role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
                     role.userSourcedId = ov.Uuid.ToString();
                     role.role = "other";
@@ -147,12 +147,12 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return result;
         }
 
-        private List<users> GetUsers()
+        private List<SdsUser> GetUsers()
         {
-            List<users> result = new List<users>();
+            List<SdsUser> result = new List<SdsUser>();
             foreach (Medewerker mw in vestigingModel.Medewerkers)
             {
-                users user = new users();
+                SdsUser user = new SdsUser();
                 user.username = sh.ReplaceTeacherProperty(SettingsHelper.OutputFormatUsernameTeacher, mw);
                 user.sourcedId = mw.Uuid.ToString();
                 result.Add(user);
@@ -161,7 +161,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
             foreach (Leerling ll in vestigingModel.Leerlingen)
             {
-                users user = new users();
+                SdsUser user = new SdsUser();
                 user.username = sh.ReplaceStudentProperty(SettingsHelper.OutputFormatUsernameStudent, ll);
                 user.sourcedId = ll.Uuid.ToString();
                 result.Add(user);
@@ -171,7 +171,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 if (!string.IsNullOrEmpty(ov.Emailadres))
                 {
-                    users user = new users();
+                    SdsUser user = new SdsUser();
                     user.username = ov.Emailadres;
                     user.sourcedId = ov.Uuid.ToString();
                     user.phone = BusinessLogicHelper.NormaliseerTelefoonnummerNaarE164(ov.Telefoonnummer);
@@ -181,10 +181,10 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return result;
         }
 
-        private List<orgs> GetOrgs()
+        private List<SdsOrganization> GetOrgs()
         {
-            List<orgs> result = new List<orgs>();
-            orgs _org = new orgs();
+            List<SdsOrganization> result = new List<SdsOrganization>();
+            SdsOrganization _org = new SdsOrganization();
             _org.sourcedId = vestigingModel.Vestiging.Uuid.ToString();
             _org.name = vestigingModel.Vestiging.Naam;
             _org.type = "school";

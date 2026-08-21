@@ -1,10 +1,10 @@
 ﻿using SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Models;
 using SomtodayOpenAPI2MicrosoftSchoolDataSyncV2.Helpers;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -47,48 +47,48 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
 
             if (!bool.TryParse(ConfigurationManager.AppSettings["BooleanFilterBylocation"], out booleanFilterBylocation))
             {
-                eh.WriteLog("Fout: BooleanFilterBylocation is ongeldig of ontbreekt in App.Config. ", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: BooleanFilterBylocation is ongeldig of ontbreekt in App.Config. ", LogLevel.Error, 400);
                 isValid = false;
             }
 
             if (!bool.TryParse(ConfigurationManager.AppSettings["SeperateOutputFolderForEachLocation"], out seperateOutputFolderForEachLocation))
             {
-                eh.WriteLog("Fout: SeperateOutputFolderForEachLocation is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: SeperateOutputFolderForEachLocation is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             includedLocationCode = ConfigurationManager.AppSettings["IncludedLocationCode"]?.Split(';');
             if (includedLocationCode == null || includedLocationCode.Length == 0)
             {
-                eh.WriteLog("Fout: IncludedLocationCode is ongeldig of ontbreek in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: IncludedLocationCode is ongeldig of ontbreek in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             schoolUUID = ConfigurationManager.AppSettings["SchoolUUID"];
             if (string.IsNullOrWhiteSpace(schoolUUID))
             {
-                eh.WriteLog("Fout: SchoolUUID is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: SchoolUUID is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             clientId = ConfigurationManager.AppSettings["ClientId"];
             if (string.IsNullOrWhiteSpace(clientId))
             {
-                eh.WriteLog("Fout: ClientId is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: ClientId is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             clientSecret = ConfigurationManager.AppSettings["ClientSecret"];
             if (string.IsNullOrWhiteSpace(clientSecret))
             {
-                eh.WriteLog("Fout: ClientSecret is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: ClientSecret is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             outputFolder = ConfigurationManager.AppSettings["OutputFolder"];
             if (string.IsNullOrWhiteSpace(outputFolder))
             {
-                eh.WriteLog("Fout: OutputFolder is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: OutputFolder is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
             else
@@ -98,13 +98,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
 
             if (!bool.TryParse(ConfigurationManager.AppSettings["EnableGuardianSync"], out enableGuardianSync))
             {
-                eh.WriteLog("Fout: EnableGuardianSync is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: EnableGuardianSync is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             if (string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["SomOmgeving"]))
             {
-                eh.WriteLog("Fout: SomOmgeving is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: SomOmgeving is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
             else
@@ -130,13 +130,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
 
             if (!int.TryParse(ConfigurationManager.AppSettings["SDSCsvVersion"], out sdsCsvVersion))
             {
-                eh.WriteLog("Fout: SDSCsvVersion is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: SDSCsvVersion is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 isValid = false;
             }
 
             if (!bool.TryParse(ConfigurationManager.AppSettings["ClearCsvAtYearEnd"], out clearCsvAtYearEnd))
             {
-                eh.WriteLog("Fout: ClearCsvAtYearEnd is ongeldig of ontbreekt in App.Config.", EventLogEntryType.Error, 400);
+                eh.WriteLog("Fout: ClearCsvAtYearEnd is ongeldig of ontbreekt in App.Config.", LogLevel.Error, 400);
                 // Kan gewoon doorgaan, want dit is niet verplicht
                 isValid = true;
             }
@@ -163,7 +163,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 case CtrlType.CTRL_SHUTDOWN_EVENT:
                 case CtrlType.CTRL_CLOSE_EVENT:
                 default:
-                    eh.WriteLog("Applicatie afgebroken", EventLogEntryType.Warning, 400);
+                    eh.WriteLog("Applicatie afgebroken", LogLevel.Warning, 400);
                     return false;
             }
         }
@@ -172,7 +172,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
         {
             if (!InitializeConfiguration())
             {
-                eh.WriteLog("De configuratie bevat fouten. Controleer alstublieft het config bestand.", EventLogEntryType.Error, 400);
+                eh.WriteLog("De configuratie bevat fouten. Controleer alstublieft het config bestand.", LogLevel.Error, 400);
                 Environment.Exit(1);
             }
         }
@@ -194,21 +194,21 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
 
                 if (clearCsvAtYearEnd && DateTime.Now.Month == 7 && DateTime.Now.Day == 31)
                 {
-                    eh.WriteLog("Vandaag worden de CSV-bestanden leeg gemaakt met applicatieversie: " + buildVersion.ToString(), EventLogEntryType.Information, 100);
+                    eh.WriteLog("Vandaag worden de CSV-bestanden leeg gemaakt met applicatieversie: " + buildVersion.ToString(), LogLevel.Information, 100);
                     try
                     {
                         fh.ClearCsvFiles(outputFolder, seperateOutputFolderForEachLocation);
-                        eh.WriteLog("CSV bestanden zijn geleegd voor het nieuwe schooljaar.", EventLogEntryType.Information, 100);
+                        eh.WriteLog("CSV bestanden zijn geleegd voor het nieuwe schooljaar.", LogLevel.Information, 100);
                     }
                     catch (Exception ex)
                     {
-                        eh.WriteLog($"Fout bij het legen van CSV bestanden: {ex.Message}", EventLogEntryType.Error, 400);
+                        eh.WriteLog($"Fout bij het legen van CSV bestanden: {ex.Message}", LogLevel.Error, 400);
                     }
                     Thread.Sleep(10000);
                     return;
                 }
 
-                eh.WriteLog("Sync gestart met applicatieversie: " + buildVersion.ToString(), EventLogEntryType.Information, 100);
+                eh.WriteLog("Sync gestart met applicatieversie: " + buildVersion.ToString(), LogLevel.Information, 100);
                 oh = new OpenAPIHelper(clientId, clientSecret, schoolUUID, somOmgeving);
                 int i = 0;
                 while (!oh.IsConnected && i < 20)
@@ -290,11 +290,11 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync
                 }
                 else
                 {
-                    eh.WriteLog("Geen verbinding met Somtoday", EventLogEntryType.Error, 100);
+                    eh.WriteLog("Geen verbinding met Somtoday", LogLevel.Error, 100);
                 }
 
                 Console.WriteLine("======================================");
-                eh.WriteLog("Sync voltooid", EventLogEntryType.Information, 100);
+                eh.WriteLog("Sync voltooid", LogLevel.Information, 100);
 
             }
             Thread.Sleep(10000);

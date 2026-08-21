@@ -1,214 +1,174 @@
-﻿using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.EventLog;
+using System;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+
+#pragma warning disable CA1416 // This project targets Windows and this file configures Windows Event Log.
 
 namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 {
-    class EventLogHelper
+    internal sealed class EventLogHelper : IDisposable
     {
-        private EventLog appLog;
-        bool boolLogCreating = true;
+        private const string LogName = "Application";
+        private const string SourceName = "SomtodayOpenAPI2MicrosoftSchoolDataSync";
 
+        private ILoggerFactory loggerFactory;
+        private ILogger logger;
 
         public EventLogHelper()
         {
-            appLog = new EventLog
-            {
-                Log = "Application",
-                Source = GetType().ToString().Split('.')[0]
-            };
-
+            ConfigureLogger(includeEventLog: false);
         }
 
-        public void WriteLog(string Message, EventLogEntryType eventType = EventLogEntryType.Information, int eventId = 0)
+        public void WriteLog(string message, LogLevel logLevel = LogLevel.Information, int eventId = 0)
         {
             try
             {
-                WriteLogUnsafe(Message, eventType, eventId);
+                logger.Log(logLevel, new EventId(eventId), "{Message}", message);
             }
             catch
             {
-
+                Console.WriteLine(message);
             }
-        }
-
-        public void WriteLogUnsafe(string Message, EventLogEntryType eventType = EventLogEntryType.Information, int eventId = 0)
-        {
-            Console.ResetColor();
-            switch (eventType)
-            {
-                case EventLogEntryType.Error:
-                    Console.BackgroundColor = ConsoleColor.Red;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine(Message);
-                    break;
-                case EventLogEntryType.Warning:
-                    Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine(Message);
-                    break;
-                case EventLogEntryType.Information:
-                    Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine(Message);
-                    break;
-                case EventLogEntryType.SuccessAudit:
-                    Console.BackgroundColor = ConsoleColor.Green;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine(Message);
-                    break;
-                case EventLogEntryType.FailureAudit:
-                    Console.BackgroundColor = ConsoleColor.Red;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.WriteLine(Message);
-                    break;
-                default:
-                    Console.WriteLine(Message);
-                    break;
-            }
-            Console.ResetColor();
-            appLog.WriteEntry(Message, eventType, eventId);
         }
 
         internal void CheckEventLog()
         {
-            bool createEntry = false;
-            createEntry = !LogExists();
-            if (createEntry)
+            if (LogExists())
             {
-                CreateLog();
+                ConfigureLogger(includeEventLog: true);
+                return;
             }
+
+            CreateLog();
         }
 
         internal void CreateLog()
         {
             Console.Write("Druk op een toets om een Windows Event Log aan te maken... ");
-            var task = Task.Run(() => Console.ReadKey(true));
-            bool read = task.Wait(10000);
-            if (read)
-            {
-                try
-                {
-                    System.Diagnostics.EventLog.CreateEventSource(source: appLog.Source, logName: appLog.Log);
-                }
-                catch
-                {
-                    //waarschijnlijk draait SDSsync niet als Admin.
-                    var proc = new ProcessStartInfo
-                    {
-                        UseShellExecute = true,
-                        FileName = @"powershell.exe",
-                        Arguments = "-command New-EventLog -Source \"" + appLog.Source + "\" -LogName \"" + appLog.Log + "\"",
-                        Verb = "runas"
-                    };
 
-                    try
-                    {
-                        Process powerShellCreateEntry = Process.Start(proc);
-                        powerShellCreateEntry.EnableRaisingEvents = true;
-                        powerShellCreateEntry.Exited += powerShellCreateEntry_Exited;
-                        Console.WriteLine("Eventlog wordt aangemaakt.");
-                    }
-                    catch (Exception powerShellCreate)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(String.Format("Eventlog aanmaken mislukt! ", powerShellCreate.Message));
-                        Console.ResetColor();
-                        boolLogCreating = false;
-                    }
-                }
-                int timeout = 0;
-                while (boolLogCreating)
-                {
-                    timeout++;
-                    Thread.Sleep(1000);
-                    if (timeout > 30)
-                    {
-                        Console.WriteLine("Timeout!");
-                        break;
-                    }
-                }
-            }
-            else
+            if (Console.IsInputRedirected)
             {
                 Console.WriteLine();
-                Console.WriteLine("Sync gestart zonder logs te schrijven.");
+                Console.WriteLine("Sync gestart zonder Windows Event Log te schrijven.");
+                return;
+            }
+
+            var keyPress = Task.Run(() => Console.ReadKey(intercept: true));
+            if (!keyPress.Wait(10000))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Sync gestart zonder Windows Event Log te schrijven.");
+                return;
+            }
+
+            try
+            {
+                EventLog.CreateEventSource(SourceName, LogName);
+                ConfigureLogger(includeEventLog: true);
+                WriteLog("Log succesvol aangemaakt!");
+            }
+            catch
+            {
+                CreateLogWithElevation();
             }
         }
 
-
-        private void powerShellCreateEntry_Exited(object sender, EventArgs e)
+        private void CreateLogWithElevation()
         {
-            Process proc = sender as Process;
-            if (proc.ExitCode == 0)
-            {
-                try
-                {
-                    WriteLogUnsafe("Log succesvol aangemaakt!");
-                    boolLogCreating = false;
-                }
-                catch
-                {
-                    //CheckEventLog();
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Eventlog aanmaken mislukt!");
-                    Console.ResetColor();
-                }
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Eventlog aanmaken mislukt!");
-                Console.ResetColor();
-            }
-        }
-
-
-        internal void DeleteLog()
-        {
-            var proc = new ProcessStartInfo
+            var startInfo = new ProcessStartInfo
             {
                 UseShellExecute = true,
-                FileName = @"powershell.exe",
-                Arguments = "-command Remove-EventLog -Source \"" + appLog.Source + "\"",
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -Command New-EventLog -Source \"" + SourceName + "\" -LogName \"" + LogName + "\"",
                 Verb = "runas"
             };
 
             try
             {
-                // Remove-EventLog  -Source "UMService2LANschoolCSV"
-                Process powerShellCreateEntry = Process.Start(proc);
+                using (Process process = Process.Start(startInfo))
+                {
+                    if (!process.WaitForExit(30000) || process.ExitCode != 0 || !LogExists())
+                    {
+                        Console.WriteLine("Eventlog aanmaken mislukt!");
+                        return;
+                    }
+                }
+
+                ConfigureLogger(includeEventLog: true);
+                WriteLog("Log succesvol aangemaakt!");
+            }
+            catch
+            {
+                Console.WriteLine("Eventlog aanmaken mislukt!");
+            }
+        }
+
+        internal void DeleteLog()
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                UseShellExecute = true,
+                FileName = "powershell.exe",
+                Arguments = "-NoProfile -Command Remove-EventLog -Source \"" + SourceName + "\"",
+                Verb = "runas"
+            };
+
+            try
+            {
+                Process.Start(startInfo);
                 Console.WriteLine("Eventlog wordt verwijderd.");
             }
-            catch (Exception)
+            catch
             {
-                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Eventlog verwijderen mislukt!");
-                Console.ResetColor();
             }
-            Thread.Sleep(2000);
         }
 
         internal bool LogExists()
         {
-            bool exists = true;
             try
             {
-                if (!EventLog.SourceExists(appLog.Source))
-                {
-                    exists = false;
-                }
+                return EventLog.SourceExists(SourceName);
             }
             catch
             {
-                exists = false;
+                return false;
             }
+        }
 
-            return exists;
+        private void ConfigureLogger(bool includeEventLog)
+        {
+            loggerFactory?.Dispose();
+            loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.SetMinimumLevel(LogLevel.Information);
+                builder.AddSimpleConsole(options =>
+                {
+                    options.ColorBehavior = LoggerColorBehavior.Enabled;
+                    options.SingleLine = true;
+                });
+
+                if (includeEventLog)
+                {
+                    builder.AddEventLog(settings =>
+                    {
+                        settings.LogName = LogName;
+                        settings.SourceName = SourceName;
+                    });
+                    builder.AddFilter<EventLogLoggerProvider>((_, level) => level >= LogLevel.Information);
+                }
+            });
+            logger = loggerFactory.CreateLogger("SomtodayOpenAPI2MicrosoftSchoolDataSync");
+        }
+
+        public void Dispose()
+        {
+            loggerFactory?.Dispose();
         }
     }
 }
+
+#pragma warning restore CA1416
