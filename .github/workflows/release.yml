@@ -68,8 +68,10 @@ jobs:
           --configuration Release
           --runtime win-x64
           --self-contained true
-          --no-restore
           --output artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-win-x64
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=None
           -p:Version=${{ needs.version.outputs.version }}
           -p:ContinuousIntegrationBuild=true
 
