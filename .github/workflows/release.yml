@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout release tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v6
@@ -87,3 +87,12 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-*-win-x64.zip
+
+      - name: Scan release artifact with VirusTotal
+        uses: crazy-max/ghaction-virustotal@v5
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          update_release_body: true
+          request_rate: 4
+          files: .zip$
