@@ -5,6 +5,8 @@ VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SomtodayOpenAPI2MicrosoftSchoolDataSync", "SomtodayOpenAPI2MicrosoftSchoolDataSync\SomtodayOpenAPI2MicrosoftSchoolDataSync.csproj", "{1A005BFB-C191-42B1-92B9-362F5440BF43}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SomtodayOpenAPI2MicrosoftSchoolDataSync.Tests", "SomtodayOpenAPI2MicrosoftSchoolDataSync.Tests\SomtodayOpenAPI2MicrosoftSchoolDataSync.Tests.csproj", "{F12E6BD2-41D0-4DA9-A65B-909D38B75E3D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{1A005BFB-C191-42B1-92B9-362F5440BF43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A005BFB-C191-42B1-92B9-362F5440BF43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A005BFB-C191-42B1-92B9-362F5440BF43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F12E6BD2-41D0-4DA9-A65B-909D38B75E3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F12E6BD2-41D0-4DA9-A65B-909D38B75E3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F12E6BD2-41D0-4DA9-A65B-909D38B75E3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F12E6BD2-41D0-4DA9-A65B-909D38B75E3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -25,11 +25,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
         internal SDScsvV1 ConvertToSDSCSV()
         {
-            SDScsvV1 result = new SDScsvV1();
+            ResolvedPopulation population = ResolvedPopulation.Create(vestigingModel);
+            SDScsvV1 result = new SDScsvV1
+            {
+                Schools = population.Classes.Count > 0 ? GetSchools() : new List<School>()
+            };
 
-            result.Schools = GetSchools();
-
-            var classesInfo = GetClassesAndEnrollments();
+            var classesInfo = GetClassesAndEnrollments(population);
 
             result.Sections = classesInfo.Sections;
             result.Teachers = classesInfo.Teachers;
@@ -37,7 +39,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             result.TeacherRosters = classesInfo.TeacherRoster;
             result.StudentEnrollments = classesInfo.StudentEnrollments;
 
-            var guardianInfo = GetGuardiansAndRelationships(classesInfo.Students);
+            var guardianInfo = GetGuardiansAndRelationships(population.StudentIds);
 
             result.User = guardianInfo.Guardians;
             result.Guardianrelationship = guardianInfo.Guardianrelationships;
@@ -45,12 +47,12 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             return result;
         }
 
-        private (List<Guardian> Guardians, List<GuardianRelationship> Guardianrelationships) GetGuardiansAndRelationships(List<Student> students)
+        private (List<Guardian> Guardians, List<GuardianRelationship> Guardianrelationships) GetGuardiansAndRelationships(HashSet<Guid> includedStudentIds)
         {
             List<Guardian> guardians = new List<Guardian>();
             List<GuardianRelationship> guardianrelationships = new List<GuardianRelationship>();
 
-            foreach (OuderVerzorger ouder in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ouder in vestigingModel.OuderVerzorgers ?? new List<OuderVerzorger>())
             {
                 if (ouder.Leerlingen_van_vestiging?.Count > 0)
                 {
@@ -58,8 +60,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
                     foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
                     {
-                        var leerlingModel = students.Where(s => s.SISid == leerling.ToString()).FirstOrDefault();
-                        if (leerlingModel != null && !string.IsNullOrEmpty(ouder.Emailadres))
+                        if (includedStudentIds.Contains(leerling) && !string.IsNullOrEmpty(ouder.Emailadres))
                         {
                             guardianFound = true;
                             GuardianRelationship gr = new GuardianRelationship();
@@ -87,7 +88,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
 
 
-        private (List<Section> Sections, List<Teacher> Teachers, List<Student> Students, List<TeacherRoster> TeacherRoster, List<StudentEnrollment> StudentEnrollments) GetClassesAndEnrollments()
+        private (List<Section> Sections, List<Teacher> Teachers, List<Student> Students, List<TeacherRoster> TeacherRoster, List<StudentEnrollment> StudentEnrollments) GetClassesAndEnrollments(ResolvedPopulation population)
         {
             string currentSchoolyear = DateTime.Now.Month < 8 ? (DateTime.Now.Year - 1) + "-" + DateTime.Now.Year : DateTime.Now.Year + "-" + (DateTime.Now.Year + 1);
             List<Section> sections = new List<Section>();
@@ -97,13 +98,10 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             List<StudentEnrollment> studentEnrollments = new List<StudentEnrollment>();
 
             string vestigingsAfkorting = vestigingModel.Vestiging.Afkorting;
-            foreach (Lesgroep lesgroep in vestigingModel.Lesgroepen)
+            foreach (ResolvedClass resolvedClass in population.Classes)
             {
-                if (!string.IsNullOrEmpty(lesgroep.Naam))
-                {
-                    if (lesgroep.Docenten?.Count > 0 && lesgroep.Leerlingen?.Count > 0)
-                    {
-                        string sectieNaam = BusinessLogicHelper.GetFilteredName(lesgroep.Naam);
+                        Lesgroep lesgroep = resolvedClass.Group;
+                        string sectieNaam = resolvedClass.FilteredName;
                         Section lg = new Section();
                         lg.SISSchoolid = vestigingModel.Vestiging.Uuid.ToString();
                         lg.SISid = (lesgroep.Naam.ToLower().StartsWith(vestigingsAfkorting.ToLower()) ? sectieNaam : vestigingsAfkorting.ToLower() + sectieNaam) + currentSchoolyear;
@@ -114,43 +112,33 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                         sections.Add(lg);
 
 
-                        foreach (var mw in lesgroep.Docenten)
+                        foreach (Medewerker currentTeacher in resolvedClass.Teachers)
                         {
-                            Medewerker currentTeacher = vestigingModel.Medewerkers.Where(m => m.Uuid == mw).FirstOrDefault();
-                            if (currentTeacher != null)
-                            {
                                 TeacherRoster er = new TeacherRoster();
-                                er.SISTeacherid = mw.ToString();
+                                er.SISTeacherid = currentTeacher.Uuid.ToString();
                                 er.SISSectionid = lg.SISid;
                                 teacherRoster.Add(er);
 
                                 Teacher teacher = new Teacher();
-                                teacher.SISid = mw.ToString();
+                                teacher.SISid = currentTeacher.Uuid.ToString();
                                 teacher.SISSchoolid = vestigingModel.Vestiging.Uuid.ToString();
                                 teacher.Username = sh.ReplaceTeacherProperty(SettingsHelper.OutputFormatUsernameTeacher, currentTeacher);
                                 teachers.Add(teacher);
-                            }
                         }
 
-                        foreach (var ll in lesgroep.Leerlingen)
+                        foreach (Leerling currentStudent in resolvedClass.Students)
                         {
-                            Leerling currentStudent = vestigingModel.Leerlingen.Where(s => s.Uuid == ll.Uuid).FirstOrDefault();
-                            if (currentStudent != null)
-                            {
                                 StudentEnrollment er = new StudentEnrollment();
-                                er.SISStudentid = ll.Uuid.ToString();
+                                er.SISStudentid = currentStudent.Uuid.ToString();
                                 er.SISSectionid = lg.SISid;
                                 studentEnrollments.Add(er);
 
                                 Student student = new Student();
-                                student.SISid = ll.Uuid.ToString();
+                                student.SISid = currentStudent.Uuid.ToString();
                                 student.SISSchoolid = vestigingModel.Vestiging.Uuid.ToString();
                                 student.Username = sh.ReplaceStudentProperty(SettingsHelper.OutputFormatUsernameStudent, currentStudent);
                                 students.Add(student);
-                            }
                         }
-                    }
-                }
             }
             if (teachers.Count() > 0)
             {

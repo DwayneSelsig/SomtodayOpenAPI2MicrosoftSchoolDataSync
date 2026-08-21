@@ -24,35 +24,33 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
         internal SDScsvV2 ConvertToSDSCSV()
         {
+            ResolvedPopulation population = ResolvedPopulation.Create(vestigingModel);
             SDScsvV2 result = new SDScsvV2();
 
-            result.orgs = GetOrgs();
-            result.users = GetUsers();
-            result.roles = GetRoles();
+            result.orgs = population.Classes.Count > 0 ? GetOrgs() : new List<SdsOrganization>();
+            result.users = GetUsers(population);
+            result.roles = GetRoles(population);
 
 
-            Tuple<List<SdsClass>, List<SdsEnrollment>> classesInfo = GetClassesAndEnrolements();
+            Tuple<List<SdsClass>, List<SdsEnrollment>> classesInfo = GetClassesAndEnrolements(population);
             result.classes = classesInfo.Item1;
             result.enrollments = classesInfo.Item2;
 
-            result.relationships = GetRelationships();
+            result.relationships = GetRelationships(population);
 
 
             return result;
         }
 
-        private List<SdsRelationship> GetRelationships()
+        private List<SdsRelationship> GetRelationships(ResolvedPopulation population)
         {
             List<SdsRelationship> relationships = new List<SdsRelationship>();
 
-            foreach (OuderVerzorger ouder in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ouder in vestigingModel.OuderVerzorgers ?? new List<OuderVerzorger>())
             {
-                foreach (Guid leerling in ouder.Leerlingen_van_vestiging)
+                foreach (Guid leerling in ouder.Leerlingen_van_vestiging ?? Array.Empty<Guid>())
                 {
-                    //Heeft deze ouder een gekoppelde leerling?
-                    var leerlingModel = vestigingModel.Leerlingen.Where(s => s.Uuid == leerling).FirstOrDefault();
-
-                    if (leerlingModel != null && !string.IsNullOrEmpty(ouder.Emailadres))
+                    if (population.StudentIds.Contains(leerling) && !string.IsNullOrEmpty(ouder.Emailadres))
                     {
                         SdsRelationship rel = new SdsRelationship();
                         rel.userSourcedId = leerling.ToString();
@@ -62,60 +60,58 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     }
                 }
             }
-            return relationships;
+            return relationships
+                .GroupBy(relationship => new { relationship.userSourcedId, relationship.relationshipUserSourcedId, relationship.relationshipRole })
+                .Select(group => group.First())
+                .ToList();
         }
 
-        private Tuple<List<SdsClass>, List<SdsEnrollment>> GetClassesAndEnrolements()
+        private Tuple<List<SdsClass>, List<SdsEnrollment>> GetClassesAndEnrolements(ResolvedPopulation population)
         {
             List<SdsClass> classes = new List<SdsClass>();
             List<SdsEnrollment> enrollments = new List<SdsEnrollment>();
 
             string currentSchoolyear = DateTime.Now.Month < 8 ? (DateTime.Now.Year - 1) + "-" + DateTime.Now.Year : DateTime.Now.Year + "-" + (DateTime.Now.Year + 1);
 
-            foreach (Lesgroep lesgroep in vestigingModel.Lesgroepen)
+            foreach (ResolvedClass resolvedClass in population.Classes)
             {
-                if (lesgroep.Docenten.Count > 0 && lesgroep.Leerlingen.Count > 0)
-                {
+                    Lesgroep lesgroep = resolvedClass.Group;
                     SdsClass lg = new SdsClass();
-                    string sectieNaam = BusinessLogicHelper.GetFilteredName(lesgroep.Naam);
+                    string sectieNaam = resolvedClass.FilteredName;
 
                     lg.title = sectieNaam;
                     lg.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
                     lg.sourcedId = (sectieNaam.ToLower().StartsWith(vestigingModel.Vestiging.Afkorting.ToLower()) ? sectieNaam : vestigingModel.Vestiging.Afkorting.ToLower() + sectieNaam) + currentSchoolyear;
 
                     classes.Add(lg);
-                    foreach (var mw in lesgroep.Docenten)
+                    foreach (Medewerker teacher in resolvedClass.Teachers)
                     {
                         SdsEnrollment er = new SdsEnrollment();
                         er.classSourcedId = lg.sourcedId;
-                        er.userSourcedId = mw.ToString();
+                        er.userSourcedId = teacher.Uuid.ToString();
                         er.role = "teacher";  // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#enrollment-roles
-                        if (vestigingModel.Medewerkers.Where(m => m.Uuid == mw).FirstOrDefault() != null) //als de docent voorkomt in de medewerkerlijst.
-                        {
-                            enrollments.Add(er);
-                        }
+                        enrollments.Add(er);
                     }
-                    foreach (var ll in lesgroep.Leerlingen)
+                    foreach (Leerling student in resolvedClass.Students)
                     {
                         SdsEnrollment er = new SdsEnrollment();
                         er.classSourcedId = lg.sourcedId;
-                        er.userSourcedId = ll.Uuid.ToString();
+                        er.userSourcedId = student.Uuid.ToString();
                         er.role = "student"; // https://learn.microsoft.com/en-us/schooldatasync/default-list-of-values#enrollment-roles
-                        if (vestigingModel.Leerlingen.Where(s => s.Uuid == ll.Uuid).FirstOrDefault() != null) //als de leerling voorkomt in de leerlinglijst.
-                        {
-                            enrollments.Add(er);
-                        }
+                        enrollments.Add(er);
                     }
-                }
             }
-            return Tuple.Create<List<SdsClass>, List<SdsEnrollment>>(classes, enrollments);
+            return Tuple.Create<List<SdsClass>, List<SdsEnrollment>>(classes, enrollments
+                .GroupBy(enrollment => new { enrollment.classSourcedId, enrollment.userSourcedId, enrollment.role })
+                .Select(group => group.First())
+                .ToList());
         }
 
 
-        private List<SdsRole> GetRoles()
+        private List<SdsRole> GetRoles(ResolvedPopulation population)
         {
             List<SdsRole> result = new List<SdsRole>();
-            foreach (Medewerker mw in vestigingModel.Medewerkers)
+            foreach (Medewerker mw in (vestigingModel.Medewerkers ?? new List<Medewerker>()).Where(medewerker => population.TeacherIds.Contains(medewerker.Uuid)))
             {
                 SdsRole role = new SdsRole();
                 role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
@@ -124,7 +120,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Add(role);
             }
 
-            foreach (Leerling ll in vestigingModel.Leerlingen)
+            foreach (Leerling ll in (vestigingModel.Leerlingen ?? new List<Leerling>()).Where(leerling => population.StudentIds.Contains(leerling.Uuid)))
             {
                 SdsRole role = new SdsRole();
                 role.orgSourcedId = vestigingModel.Vestiging.Uuid.ToString();
@@ -133,7 +129,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Add(role);
             }
 
-            foreach (OuderVerzorger ov in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ov in GetIncludedGuardians(population))
             {
                 if (!string.IsNullOrEmpty(ov.Emailadres))
                 {
@@ -144,13 +140,16 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                     result.Add(role);
                 }
             }
-            return result;
+            return result
+                .GroupBy(role => new { role.userSourcedId, role.orgSourcedId, role.role })
+                .Select(group => group.First())
+                .ToList();
         }
 
-        private List<SdsUser> GetUsers()
+        private List<SdsUser> GetUsers(ResolvedPopulation population)
         {
             List<SdsUser> result = new List<SdsUser>();
-            foreach (Medewerker mw in vestigingModel.Medewerkers)
+            foreach (Medewerker mw in (vestigingModel.Medewerkers ?? new List<Medewerker>()).Where(medewerker => population.TeacherIds.Contains(medewerker.Uuid)))
             {
                 SdsUser user = new SdsUser();
                 user.username = sh.ReplaceTeacherProperty(SettingsHelper.OutputFormatUsernameTeacher, mw);
@@ -159,7 +158,7 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
 
             }
 
-            foreach (Leerling ll in vestigingModel.Leerlingen)
+            foreach (Leerling ll in (vestigingModel.Leerlingen ?? new List<Leerling>()).Where(leerling => population.StudentIds.Contains(leerling.Uuid)))
             {
                 SdsUser user = new SdsUser();
                 user.username = sh.ReplaceStudentProperty(SettingsHelper.OutputFormatUsernameStudent, ll);
@@ -167,18 +166,22 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 result.Add(user);
             }
 
-            foreach (OuderVerzorger ov in vestigingModel.OuderVerzorgers)
+            foreach (OuderVerzorger ov in GetIncludedGuardians(population))
             {
-                if (!string.IsNullOrEmpty(ov.Emailadres))
-                {
                     SdsUser user = new SdsUser();
                     user.username = ov.Emailadres;
                     user.sourcedId = ov.Uuid.ToString();
                     user.phone = BusinessLogicHelper.NormaliseerTelefoonnummerNaarE164(ov.Telefoonnummer);
                     result.Add(user);
-                }
             }
-            return result;
+            return result.GroupBy(user => user.sourcedId).Select(group => group.First()).ToList();
+        }
+
+        private IEnumerable<OuderVerzorger> GetIncludedGuardians(ResolvedPopulation population)
+        {
+            return (vestigingModel.OuderVerzorgers ?? new List<OuderVerzorger>())
+                .Where(guardian => !string.IsNullOrEmpty(guardian.Emailadres))
+                .Where(guardian => (guardian.Leerlingen_van_vestiging ?? Array.Empty<Guid>()).Any(population.StudentIds.Contains));
         }
 
         private List<SdsOrganization> GetOrgs()

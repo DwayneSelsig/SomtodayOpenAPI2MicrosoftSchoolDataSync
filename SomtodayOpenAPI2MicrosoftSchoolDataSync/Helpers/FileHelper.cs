@@ -48,10 +48,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
                 Sections = sdsCsv.SelectMany(o => o.Sections).ToList(),
                 Teachers = sdsCsv.SelectMany(o => o.Teachers).ToList(),
                 Students = sdsCsv.SelectMany(o => o.Students).ToList(),
-                TeacherRosters = sdsCsv.SelectMany(o => o.TeacherRosters).ToList(),
-                StudentEnrollments = sdsCsv.SelectMany(o => o.StudentEnrollments).ToList(),
-                User = sdsCsv.SelectMany(o => o.User).ToList(),
-                Guardianrelationship = sdsCsv.SelectMany(o => o.Guardianrelationship).ToList()
+                TeacherRosters = sdsCsv.SelectMany(o => o.TeacherRosters)
+                    .GroupBy(roster => new { roster.SISSectionid, roster.SISTeacherid }).Select(group => group.First()).ToList(),
+                StudentEnrollments = sdsCsv.SelectMany(o => o.StudentEnrollments)
+                    .GroupBy(enrollment => new { enrollment.SISSectionid, enrollment.SISStudentid }).Select(group => group.First()).ToList(),
+                User = sdsCsv.SelectMany(o => o.User).GroupBy(guardian => guardian.SISid).Select(group => group.First()).ToList(),
+                Guardianrelationship = sdsCsv.SelectMany(o => o.Guardianrelationship)
+                    .GroupBy(relationship => new { relationship.SISid, relationship.Email, relationship.Role }).Select(group => group.First()).ToList()
             };
             SaveV1ToDisk(completeList, actualOutputFolder);
         }
@@ -125,10 +128,13 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers
             {
                 orgs = sdsCsvList.SelectMany(o => o.orgs).ToList(),
                 classes = sdsCsvList.SelectMany(c => c.classes).ToList(),
-                enrollments = sdsCsvList.SelectMany(e => e.enrollments).ToList(),
-                relationships = sdsCsvList.SelectMany(r => r.relationships).ToList(),
-                roles = sdsCsvList.SelectMany(r => r.roles).ToList(),
-                users = sdsCsvList.SelectMany(u => u.users).ToList(),
+                enrollments = sdsCsvList.SelectMany(e => e.enrollments)
+                    .GroupBy(enrollment => new { enrollment.classSourcedId, enrollment.userSourcedId, enrollment.role }).Select(group => group.First()).ToList(),
+                relationships = sdsCsvList.SelectMany(r => r.relationships)
+                    .GroupBy(relationship => new { relationship.userSourcedId, relationship.relationshipUserSourcedId, relationship.relationshipRole }).Select(group => group.First()).ToList(),
+                roles = sdsCsvList.SelectMany(r => r.roles)
+                    .GroupBy(role => new { role.userSourcedId, role.orgSourcedId, role.role }).Select(group => group.First()).ToList(),
+                users = sdsCsvList.SelectMany(u => u.users).GroupBy(user => user.sourcedId).Select(group => group.First()).ToList(),
             };
             SaveV2ToDisk(completelist, outputFolder);
         }

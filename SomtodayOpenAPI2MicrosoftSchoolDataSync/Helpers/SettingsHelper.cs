@@ -15,11 +15,17 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSyncV2.Helpers
 {
     public class SettingsHelper
     {
-        public static readonly string OutputFormatUsernameTeacher = (ConfigurationManager.AppSettings["OutputFormatUsernameTeacher"]).StartsWith("{user.") && (ConfigurationManager.AppSettings["OutputFormatUsernameTeacher"]).EndsWith("}") ? ConfigurationManager.AppSettings["OutputFormatUsernameTeacher"] : "{user." + ConfigurationManager.AppSettings["OutputFormatUsernameTeacher"] + "}";
-        public static readonly string OutputFormatUsernameStudent = (ConfigurationManager.AppSettings["OutputFormatUsernameStudent"]).StartsWith("{user.") && (ConfigurationManager.AppSettings["OutputFormatUsernameStudent"]).EndsWith("}") ? ConfigurationManager.AppSettings["OutputFormatUsernameStudent"] : "{user." + ConfigurationManager.AppSettings["OutputFormatUsernameStudent"] + "}";
+        public static readonly string OutputFormatUsernameTeacher = BuildUsernameFormat(ConfigurationManager.AppSettings["OutputFormatUsernameTeacher"]);
+        public static readonly string OutputFormatUsernameStudent = BuildUsernameFormat(ConfigurationManager.AppSettings["OutputFormatUsernameStudent"]);
 
 
         EventLogHelper eh = Program.eh;
+
+        private static string BuildUsernameFormat(string configuredFormat)
+        {
+            string format = string.IsNullOrWhiteSpace(configuredFormat) ? "Emailadres" : configuredFormat;
+            return format.StartsWith("{user.") && format.EndsWith("}") ? format : "{user." + format + "}";
+        }
 
         internal bool ValidateUsernameFormat()
         {
