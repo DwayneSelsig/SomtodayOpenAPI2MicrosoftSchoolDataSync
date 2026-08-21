@@ -1,0 +1,87 @@
+name: Publish release
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  version:
+    name: Validate version
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Validate and extract release version
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          if ($tag -notmatch '^v(?<version>\d+\.\d+\.\d+\.\d+)$') {
+            throw "Release tag '$tag' is invalid. Use v1.2.3.4."
+          }
+
+          $version = [Version]$Matches.version
+          if ($version.Major -gt 65534 -or
+              $version.Minor -gt 65534 -or
+              $version.Build -gt 65534 -or
+              $version.Revision -gt 65534) {
+            throw "Every version component must be between 0 and 65534."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+  publish:
+    name: Build and publish release
+    needs: version
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore SomtodayOpenAPI2MicrosoftSchoolDataSync.sln
+
+      - name: Test release build
+        run: >-
+          dotnet test SomtodayOpenAPI2MicrosoftSchoolDataSync.sln
+          --configuration Release
+          --no-restore
+          -p:Version=${{ needs.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Publish self-contained Windows application
+        run: >-
+          dotnet publish SomtodayOpenAPI2MicrosoftSchoolDataSync/SomtodayOpenAPI2MicrosoftSchoolDataSync.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          --no-restore
+          --output artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-win-x64
+          -p:Version=${{ needs.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Package release artifact
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          $archive = "artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-$env:VERSION-win-x64.zip"
+          Compress-Archive -Path 'artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-win-x64/*' -DestinationPath $archive -CompressionLevel Optimal
+
+      - name: Upload release artifact
+        uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/SomtodayOpenAPI2MicrosoftSchoolDataSync-*-win-x64.zip

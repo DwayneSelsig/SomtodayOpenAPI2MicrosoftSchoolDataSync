@@ -1,0 +1,32 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore SomtodayOpenAPI2MicrosoftSchoolDataSync.sln
+
+      - name: Build and test
+        run: >-
+          dotnet test SomtodayOpenAPI2MicrosoftSchoolDataSync.sln
+          --configuration Release
+          --no-restore
+          -p:Version=0.0.0.0
+          -p:ContinuousIntegrationBuild=true

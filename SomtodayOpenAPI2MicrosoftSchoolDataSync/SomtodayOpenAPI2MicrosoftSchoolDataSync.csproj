@@ -5,7 +5,11 @@
     <RootNamespace>SomtodayOpenAPI2MicrosoftSchoolDataSync</RootNamespace>
     <AssemblyName>SomtodayOpenAPI2MicrosoftSchoolDataSync</AssemblyName>
     <ApplicationIcon>Resources\SOMSDS.ico</ApplicationIcon>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version Condition="'$(Version)' == ''">0.0.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
     <AppConfig>App.config</AppConfig>
   </PropertyGroup>
 
@@ -23,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Properties\VersionInfo.cs" />
     <None Include="R:\openapi.json" Link="OpenAPIs\openapi.json">
       <ClassName>SomOpenApiClient</ClassName>
       <CodeGenerator>NSwagCSharp</CodeGenerator>
