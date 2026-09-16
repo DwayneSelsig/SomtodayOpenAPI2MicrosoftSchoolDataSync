@@ -9,14 +9,14 @@ updates:
     open-pull-requests-limit: 5
 
     groups:
-  dotnet-runtime-packages:
-    patterns:
-      - "Microsoft.Extensions.*"
-      - "System.Diagnostics.EventLog"
-      - "System.Configuration.ConfigurationManager"
-    update-types:
-      - "minor"
-      - "patch"
+      dotnet-runtime-packages:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "System.Diagnostics.EventLog"
+          - "System.Configuration.ConfigurationManager"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: github-actions
     directory: /
