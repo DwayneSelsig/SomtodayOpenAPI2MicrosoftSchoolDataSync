@@ -1,4 +1,4 @@
-﻿using CsvHelper.Configuration;
+﻿using CsvHelper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,163 +22,114 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         public List<GuardianRelationship> Guardianrelationship { get; set; }
 
     }
-    public class GuardianRelationship
+    [CsvRecord]
+    public partial class GuardianRelationship
     {
         [DisplayName("SIS ID")]
+        [CsvColumn("SIS ID", Index = 0)]
         public string SISid { get; set; }
         [DisplayName("Email")]
+        [CsvColumn("Email", Index = 1)]
         public string Email { get; set; }
         [DisplayName("Role")]
-        public string Role { get; } = "guardian";  // Read-only property, initialized to "guardian"
-    }
-    public sealed class GuardianRelationshipCSVMap : ClassMap<GuardianRelationship>
-    {
-        public GuardianRelationshipCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISid).Name("SIS ID");
-            Map(m => m.Email).Name("Email");
-            Map(m => m.Role).Name("Role");
-        }
+        [CsvColumn("Role", Index = 2)]
+        public string Role { get; private set; } = "guardian";  // Read-only property, initialized to "guardian"
     }
 
-
-    public class Guardian
+    [CsvRecord]
+    public partial class Guardian
     {
         [DisplayName("Email")]
+        [CsvColumn("Email", Index = 0)]
         public string Email { get; set; }
         [DisplayName("First Name")]
+        [CsvColumn("First Name", Index = 1)]
         public string FirstName { get; set; }
         [DisplayName("Last Name")]
+        [CsvColumn("Last Name", Index = 2)]
         public string LastName { get; set; }
         [DisplayName("Phone")]
+        [CsvColumn("Phone", Index = 3)]
         public string Phone { get; set; }
         [DisplayName("SIS ID")]
+        [CsvColumn("SIS ID", Index = 4)]
         public string SISid { get; set; }
     }
-    public sealed class GuardianCSVMap : ClassMap<Guardian>
-    {
-        public GuardianCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.Email).Name("Email");
-            Map(m => m.FirstName).Name("First Name");
-            Map(m => m.LastName).Name("Last Name");
-            Map(m => m.Phone).Name("Phone");
-            Map(m => m.SISid).Name("SIS ID");
-        }
-    }
 
-
-    public class TeacherRoster
+    [CsvRecord]
+    public partial class TeacherRoster
     {
         [DisplayName("Section SIS ID")]
+        [CsvColumn("Section SIS ID", Index = 0)]
         public string SISSectionid { get; set; }
         [DisplayName("SIS ID")]
+        [CsvColumn("SIS ID", Index = 1)]
         public string SISTeacherid { get; set; }
     }
-    public sealed class TeacherRosterCSVMap : ClassMap<TeacherRoster>
-    {
-        public TeacherRosterCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISSectionid).Name("Section SIS ID");
-            Map(m => m.SISTeacherid).Name("SIS ID");
-        }
-    }
 
-
-    public class StudentEnrollment
+    [CsvRecord]
+    public partial class StudentEnrollment
     {
+        [CsvColumn("Section SIS ID", Index = 0)]
         public string SISSectionid { get; set; }
+        [CsvColumn("SIS ID", Index = 1)]
         public string SISStudentid { get; set; }
     }
-    public sealed class StudentEnrollmentCSVMap : ClassMap<StudentEnrollment>
-    {
-        public StudentEnrollmentCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISSectionid).Name("Section SIS ID");
-            Map(m => m.SISStudentid).Name("SIS ID");
-        }
-    }
 
-
-    public class Teacher
+    [CsvRecord]
+    public partial class Teacher
     {
+        [CsvColumn("SIS ID", Index = 0)]
         public string SISid { get; set; }
+        [CsvColumn("School SIS ID", Index = 1)]
         public string SISSchoolid { get; set; }
+        [CsvColumn("Username", Index = 2)]
         public string Username { get; set; }
+        [CsvIgnore]
         public string Firstname { get; set; }
+        [CsvIgnore]
         public string Lastname { get; set; }
     }
-    public sealed class TeacherCSVMap : ClassMap<Teacher>
-    {
-        public TeacherCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISid).Name("SIS ID");
-            Map(m => m.SISSchoolid).Name("School SIS ID");
-            Map(m => m.Username).Name("Username");
-        }
-    }
 
-
-    public class Student
+    [CsvRecord]
+    public partial class Student
     {
+        [CsvColumn("SIS ID", Index = 0)]
         public string SISid { get; set; }
+        [CsvColumn("School SIS ID", Index = 1)]
         public string SISSchoolid { get; set; }
+        [CsvColumn("Username", Index = 2)]
         public string Username { get; set; }
+        [CsvIgnore]
         public string Firstname { get; set; }
+        [CsvIgnore]
         public string Lastname { get; set; }
     }
-    public sealed class StudentCSVMap : ClassMap<Student>
-    {
-        public StudentCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISid).Name("SIS ID");
-            Map(m => m.SISSchoolid).Name("School SIS ID");
-            Map(m => m.Username).Name("Username");
-        }
-    }
 
-
-    public class Section
+    [CsvRecord]
+    public partial class Section
     {
+        [CsvColumn("SIS ID", Index = 0)]
         public string SISid { get; set; }
+        [CsvColumn("School SIS ID", Index = 1)]
         public string SISSchoolid { get; set; }
+        [CsvColumn("Section Name", Index = 2)]
         public string Name { get; set; }
+        [CsvColumn("Section Number", Index = 3)]
         public string Number { get; set; }
+        [CsvColumn("Course Name", Index = 4)]
         public string CourseName { get; set; }
+        [CsvColumn("Course Description", Index = 5)]
         public string CourseDescription { get; set; }
 
     }
-    public sealed class SectionCSVMap : ClassMap<Section>
+
+    [CsvRecord]
+    public partial class School
     {
-        public SectionCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISid).Name("SIS ID");
-            Map(m => m.SISSchoolid).Name("School SIS ID");
-            Map(m => m.Name).Name("Section Name");
-            Map(m => m.Number).Name("Section Number");
-            Map(m => m.CourseName).Name("Course Name");
-            Map(m => m.CourseDescription).Name("Course Description");
-        }
-    }
-    public class School
-    {
+        [CsvColumn("SIS ID", Index = 0)]
         public string SISid { get; set; }
+        [CsvColumn("Name", Index = 1)]
         public string Name { get; set; }
-    }
-    public sealed class SchoolCSVMap : ClassMap<School>
-    {
-        public SchoolCSVMap()
-        {
-            //AutoMap();
-            Map(m => m.SISid).Name("SIS ID");
-            Map(m => m.Name).Name("Name");
-        }
     }
 }

@@ -1,4 +1,5 @@
 using SomtodayOpenAPI2MicrosoftSchoolDataSync;
+using CsvHelper;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Helpers;
 using SomtodayOpenAPI2MicrosoftSchoolDataSync.Models;
 using System;
@@ -12,6 +13,26 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Tests;
 
 public class PopulationExportTests
 {
+    [Fact]
+    public void V1_csv_preserves_mapped_columns_and_guardian_role()
+    {
+        using var output = new StringWriter();
+        using (var csv = CsvWriter.Create(output, leaveOpen: true))
+        {
+            csv.WriteRecords(new[] { new GuardianRelationship { SISid = "student", Email = "parent@example.test" } });
+        }
+
+        Assert.Equal("SIS ID,Email,Role\r\nstudent,parent@example.test,guardian\r\n", output.ToString());
+
+        using var teacherOutput = new StringWriter();
+        using (var csv = CsvWriter.Create(teacherOutput, leaveOpen: true))
+        {
+            csv.WriteRecords(new[] { new Teacher { SISid = "teacher", SISSchoolid = "school", Username = "user", Firstname = "Excluded" } });
+        }
+
+        Assert.Equal("SIS ID,School SIS ID,Username\r\nteacher,school,user\r\n", teacherOutput.ToString());
+    }
+
     [Fact]
     public async Task Authentication_request_encodes_credentials_as_form_data()
     {

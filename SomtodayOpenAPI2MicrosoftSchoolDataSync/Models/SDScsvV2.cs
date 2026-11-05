@@ -1,6 +1,4 @@
 ﻿using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,50 +47,39 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class SdsClass
+    [CsvRecord]
+    public partial class SdsClass
     {
+        [CsvColumn("sourcedId", Index = 0)]
         public string sourcedId { get; set; }
+        [CsvColumn("orgSourcedId", Index = 1)]
         public string orgSourcedId { get; set; }
+        [CsvColumn("title", Index = 2)]
         public string title { get; set; }
+        [CsvColumn("sessionSourcedIds", Index = 3)]
         public string sessionSourcedIds { get; set; }
+        [CsvColumn("courseSourcedId", Index = 4)]
         public string courseSourcedId { get; set; }
     }
 
-    public class SdsClassMap : ClassMap<SdsClass>
-    {
-        public SdsClassMap()
-        {
-            Map(m => m.sourcedId).Name("sourcedId");
-            Map(m => m.orgSourcedId).Name("orgSourcedId");
-            Map(m => m.title).Name("title");
-            Map(m => m.sessionSourcedIds).Name("sessionSourcedIds");
-            Map(m => m.courseSourcedId).Name("courseSourcedId");
-        }
-    }
 
-    public class SdsCourse
+    [CsvRecord]
+    public partial class SdsCourse
     {
+        [CsvColumn("sourcedId", Index = 0)]
         public string sourcedId { get; set; }
+        [CsvColumn("orgSourcedId", Index = 1)]
         public int orgSourcedId { get; set; }
+        [CsvColumn("title", Index = 2)]
         public string title { get; set; }
+        [CsvColumn("schoolYearSourcedId", Index = 3)]
         public string schoolYearSourcedId { get; set; }
+        [CsvColumn("code", Index = 4)]
         public string code { get; set; }
+        [CsvColumn("subject", Index = 5)]
         public int? subject { get; set; }
+        [CsvColumn("grade", Index = 6)]
         public string grade { get; set; }
-    }
-
-    public class SdsCourseMap : ClassMap<SdsCourse>
-    {
-        public SdsCourseMap()
-        {
-            Map(m => m.sourcedId).Name("sourcedId");
-            Map(m => m.orgSourcedId).Name("orgSourcedId");
-            Map(m => m.title).Name("title");
-            Map(m => m.schoolYearSourcedId).Name("schoolYearSourcedId");
-            Map(m => m.code).Name("code");
-            Map(m => m.subject).Name("subject");
-            Map(m => m.grade).Name("grade");
-        }
     }
 
     /*
@@ -124,28 +111,28 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class SdsEnrollment
+    [CsvRecord]
+    public partial class SdsEnrollment
     {
+        [CsvColumn("classSourcedId", Index = 0)]
         public string classSourcedId { get; set; }
+        [CsvColumn("userSourcedId", Index = 1)]
         public string userSourcedId { get; set; }
+        [CsvColumn("role", Index = 2)]
         public string role { get; set; }
     }
 
-    public class SdsEnrollmentMap : ClassMap<SdsEnrollment>
-    {
-        public SdsEnrollmentMap()
-        {
-            Map(m => m.classSourcedId).Name("classSourcedId");
-            Map(m => m.userSourcedId).Name("userSourcedId");
-            Map(m => m.role).Name("role");
-        }
-    }
 
-    public class SdsOrganization
+    [CsvRecord]
+    public partial class SdsOrganization
     {
+        [CsvColumn("sourcedId", Index = 0)]
         public string sourcedId { get; set; }
+        [CsvColumn("name", Index = 1)]
         public string name { get; set; }
+        [CsvColumn("type", Index = 2)]
         public string type { get; set; }
+        [CsvColumn("parentSourcedId", Index = 3)]
         public int? parentSourcedId { get; set; }
 
         /*public enum type
@@ -173,59 +160,33 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
         }*/
     }
 
-    public class SdsOrganizationMap : ClassMap<SdsOrganization>
-    {
-        public SdsOrganizationMap()
-        {
-            Map(m => m.sourcedId).Name("sourcedId");
-            Map(m => m.name).Name("name");
-            Map(m => m.type).Name("type");
-            Map(m => m.parentSourcedId).Name("parentSourcedId");
-        }
-    }
 
-    public class SdsRelationship
+    [CsvRecord]
+    public partial class SdsRelationship
     {
+        [CsvColumn("userSourcedId", Index = 0)]
         public string userSourcedId { get; set; }
+        [CsvColumn("relationshipUserSourcedId", Index = 1)]
         public string relationshipUserSourcedId { get; set; }
+        [CsvColumn("relationshipRole", Index = 2)]
         public string relationshipRole { get; set; }
     }
 
-    public class SdsRelationshipMap : ClassMap<SdsRelationship>
-    {
-        public SdsRelationshipMap()
-        {
-            Map(m => m.userSourcedId).Name("userSourcedId");
-            Map(m => m.relationshipUserSourcedId).Name("relationshipUserSourcedId");
-            Map(m => m.relationshipRole).Name("relationshipRole");
-        }
-    }
 
-    public class SdsRole
+    [CsvRecord]
+    public partial class SdsRole
     {
+        [CsvColumn("userSourcedId", Index = 0)]
         public string userSourcedId { get; set; }
+        [CsvColumn("orgSourcedId", Index = 1)]
         public string orgSourcedId { get; set; }
+        [CsvColumn("role", Index = 2)]
         public string role { get; set; }
         //public string sessionSourcedId { get; set; }
         //public string grade { get; set; }
         //public bool isPrimary { get; set; }
         //public DateTime roleStartDate { get; set; }
         //public DateTime roleEndDate { get; set; }
-    }
-
-    public class SdsRoleMap : ClassMap<SdsRole>
-    {
-        public SdsRoleMap()
-        {
-            Map(m => m.userSourcedId).Name("userSourcedId");
-            Map(m => m.orgSourcedId).Name("orgSourcedId");
-            Map(m => m.role).Name("role");
-            //Map(m => m.sessionSourcedId).Name("sessionSourcedId");
-            //Map(m => m.grade).Name("grade");
-            //Map(m => m.isPrimary).Name("isPrimary");
-            //Map(m => m.roleStartDate).Name("roleStartDate");
-            //Map(m => m.roleEndDate).Name("roleEndDate");
-        }
     }
 
     /*
@@ -245,34 +206,27 @@ namespace SomtodayOpenAPI2MicrosoftSchoolDataSync.Models
     }
     */
 
-    public class SdsUser
+    [CsvRecord]
+    public partial class SdsUser
     {
+        [CsvColumn("sourcedId", Index = 0)]
         public string sourcedId { get; set; }
+        [CsvColumn("username", Index = 1)]
         public string username { get; set; }
+        [CsvColumn("givenName", Index = 2)]
         public string givenName { get; set; }
+        [CsvColumn("familyName", Index = 3)]
         public string familyName { get; set; }
+        [CsvColumn("password", Index = 4)]
         public string password { get; set; }
+        [CsvColumn("activeDirectoryMatchId", Index = 5)]
         public string activeDirectoryMatchId { get; set; }
+        [CsvColumn("email", Index = 6)]
         public string email { get; set; }
+        [CsvColumn("phone", Index = 7)]
         public string phone { get; set; }
+        [CsvColumn("sms", Index = 8)]
         public string sms { get; set; }
     }
-
-    public class SdsUserMap : ClassMap<SdsUser>
-    {
-        public SdsUserMap()
-        {
-            Map(m => m.sourcedId).Name("sourcedId");
-            Map(m => m.username).Name("username");
-            Map(m => m.givenName).Name("givenName");
-            Map(m => m.familyName).Name("familyName");
-            Map(m => m.password).Name("password");
-            Map(m => m.activeDirectoryMatchId).Name("activeDirectoryMatchId");
-            Map(m => m.email).Name("email");
-            Map(m => m.phone).Name("phone");
-            Map(m => m.sms).Name("sms");
-        }
-    }
-
 
 }
