@@ -21,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="10.0.14" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.14" />
-    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.14" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="11.0.0" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.4" />
   </ItemGroup>
 
